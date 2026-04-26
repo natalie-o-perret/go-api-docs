@@ -577,6 +577,8 @@ See [`COMPARISON.md`](COMPARISON.md) for full details.
 | `example/swagger/basic`      | swagger               | Petstore via Swagger UI                                                 |
 | `example/swagger/full`       | swagger               | Branding, dark mode, env badge, live Tasks API                          |
 | `example/swagger/openapi`    | openapi + swagger     | **Spec auto-generated** from Go types, Tasks API                        |
+| `example/redoc/openapi`      | openapi + redoc       | **Spec auto-generated** from Go types, Tasks API, served via Redoc      |
+| `example/elements/openapi`   | openapi + elements    | **Spec auto-generated** from Go types, Tasks API, served via Elements   |
 | `example/openapi/stdhttp`    | openapi only          | Plain `net/http` - zero framework, also shows `//go:generate goapi-gen` |
 | `example/openapi/chi`        | openapi + chi         | Typed router mounted inside chi                                         |
 | `example/openapi/gorilla`    | openapi + gorilla/mux | Typed router mounted inside gorilla/mux                                 |
@@ -596,6 +598,8 @@ cd example/openapi/echo       && go run . && open http://localhost:9094
 cd example/openapi/fiber      && go run . && open http://localhost:9095
 cd example/openapi/httprouter && go run . && open http://localhost:9096
 cd example/swagger/openapi    && go run . && open http://localhost:9083
+cd example/redoc/openapi      && go run . && open http://localhost:9084
+cd example/elements/openapi   && go run . && open http://localhost:9085
 ```
 
 ---
