@@ -31,7 +31,7 @@ jobs:
     name: "*.go, *.sum"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-go@v6
         with:
@@ -46,7 +46,7 @@ jobs:
     name: "*.yml, *.yaml"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: install yamllint
         run: pip install yamllint
@@ -58,7 +58,7 @@ jobs:
     name: "*.md, *.rst"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: DavidAnson/markdownlint-cli2-action@v23
         with:
@@ -68,7 +68,7 @@ jobs:
     name: json
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: validate json files
         run: |
