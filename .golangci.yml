@@ -8,8 +8,8 @@ linters:
     - ineffassign
     - govet
   exclusions:
-    paths:
-      - example
+    rules:
+      - path: example/
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
