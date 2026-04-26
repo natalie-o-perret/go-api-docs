@@ -480,24 +480,24 @@ See [`COMPARISON.md`](COMPARISON.md) for full details.
 | `examples/ui/swagger/basic`      | swagger               | Petstore via Swagger UI                                                 |
 | `examples/ui/swagger/full`       | swagger               | Branding, dark mode, env badge, live Tasks API                          |
 | `examples/ui/swagger/openapi`    | openapi + swagger     | **Spec auto-generated** from Go types, Tasks API                        |
-| `example/openapi/stdhttp`    | openapi only          | Plain `net/http` - zero framework, also shows `//go:generate goapi-gen` |
-| `example/openapi/chi`        | openapi + chi         | Typed router mounted inside chi                                         |
-| `example/openapi/gorilla`    | openapi + gorilla/mux | Typed router mounted inside gorilla/mux                                 |
-| `example/openapi/gin`        | openapi + gin         | Typed router wrapped with `gin.WrapH`                                   |
-| `example/openapi/echo`       | openapi + echo        | Typed router wrapped with `echo.WrapHandler`                            |
-| `example/openapi/fiber`      | openapi + fiber       | Typed router wrapped with `adaptor.HTTPHandler`                         |
-| `example/openapi/httprouter` | openapi + httprouter  | `WithPathValueFn` + context adapter                                     |
+| `examples/openapi/stdhttp`    | openapi only          | Plain `net/http` - zero framework, also shows `//go:generate goapi-gen` |
+| `examples/openapi/chi`        | openapi + chi         | Typed router mounted inside chi                                         |
+| `examples/openapi/gorilla`    | openapi + gorilla/mux | Typed router mounted inside gorilla/mux                                 |
+| `examples/openapi/gin`        | openapi + gin         | Typed router wrapped with `gin.WrapH`                                   |
+| `examples/openapi/echo`       | openapi + echo        | Typed router wrapped with `echo.WrapHandler`                            |
+| `examples/openapi/fiber`      | openapi + fiber       | Typed router wrapped with `adaptor.HTTPHandler`                         |
+| `examples/openapi/httprouter` | openapi + httprouter  | `WithPathValueFn` + context adapter                                     |
 
 Each example is a self-contained Go module:
 
 ```bash
-cd example/openapi/stdhttp    && go run . && open http://localhost:9097
-cd example/openapi/chi        && go run . && open http://localhost:9091
-cd example/openapi/gorilla    && go run . && open http://localhost:9092
-cd example/openapi/gin        && go run . && open http://localhost:9093
-cd example/openapi/echo       && go run . && open http://localhost:9094
-cd example/openapi/fiber      && go run . && open http://localhost:9095
-cd example/openapi/httprouter && go run . && open http://localhost:9096
+cd examples/openapi/stdhttp    && go run . && open http://localhost:9097
+cd examples/openapi/chi        && go run . && open http://localhost:9091
+cd examples/openapi/gorilla    && go run . && open http://localhost:9092
+cd examples/openapi/gin        && go run . && open http://localhost:9093
+cd examples/openapi/echo       && go run . && open http://localhost:9094
+cd examples/openapi/fiber      && go run . && open http://localhost:9095
+cd examples/openapi/httprouter && go run . && open http://localhost:9096
 cd examples/ui/swagger/openapi    && go run . && open http://localhost:9083
 ```
 
