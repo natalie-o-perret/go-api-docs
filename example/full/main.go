@@ -1,12 +1,12 @@
-// Example: basic — OpenAPI 3.1 spec + live mock API, all in one server.
+// Example: full — everything turned on, pink-accented theme.
 //
-// Every endpoint in openapi.json is wired to a handler that returns realistic
-// mock data, so Scalar's "Try it" panel works out of the box.
+// Showcases: branding header, env badge, custom CSS (pink accents),
+// WithBaseServerURL, and all boolean flags — plus a live mock API.
 //
 // Run from this directory:
 //
 //	go run .
-//	open http://localhost:8080
+//	open http://localhost:8084
 package main
 
 import (
@@ -23,7 +23,34 @@ import (
 //go:embed openapi.json
 var specJSON []byte
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── pink custom CSS ───────────────────────────────────────────────────────────
+
+const pinkCSS = `
+/* ── scalar variable overrides ── */
+.light-mode, .dark-mode {
+  --scalar-color-1:            #ff2d78;
+  --scalar-color-accent:       #ff2d78;
+  --scalar-button-1:           #ff2d78;
+  --scalar-button-1-hover:     #e0005f;
+  --scalar-sidebar-color-active: #ff2d78;
+  --scalar-sidebar-background-active: rgba(255,45,120,.12);
+}
+
+/* ── branded header: hot-pink gradient ── */
+.gs-header {
+  background: linear-gradient(135deg, #1a0010 0%, #2d0020 100%) !important;
+  border-bottom: 1px solid rgba(255,45,120,.35) !important;
+}
+.gs-brand-title  { color: #ff2d78 !important; }
+.gs-brand-subtitle { color: #ffaacb !important; }
+.gs-env-badge {
+  background: rgba(255,45,120,.18) !important;
+  color: #ff2d78 !important;
+  border-color: rgba(255,45,120,.45) !important;
+}
+`
+
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -42,7 +69,7 @@ func requireBearer(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-// ── seed data ────────────────────────────────────────────────────────────────
+// ── seed data ─────────────────────────────────────────────────────────────────
 
 var (
 	now   = time.Now().UTC().Truncate(time.Second)
@@ -94,7 +121,7 @@ var (
 	}
 )
 
-// ── handlers ─────────────────────────────────────────────────────────────────
+// ── handlers ──────────────────────────────────────────────────────────────────
 
 func handleListTasks(w http.ResponseWriter, r *http.Request) {
 	if !requireBearer(w, r) {
@@ -119,16 +146,14 @@ func handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"code": "invalid_body", "message": "title is required"})
 		return
 	}
-	task := map[string]any{
+	writeJSON(w, http.StatusCreated, map[string]any{
 		"id": "task_new", "title": body["title"],
 		"description": body["description"],
 		"status": "open", "priority": "medium",
-		"assignee":  nil,
-		"dueAt":     nil,
+		"assignee":  nil, "dueAt": nil,
 		"createdAt": now.Format(time.RFC3339),
 		"updatedAt": now.Format(time.RFC3339),
-	}
-	writeJSON(w, http.StatusCreated, task)
+	})
 }
 
 func handleGetTask(w http.ResponseWriter, r *http.Request) {
@@ -204,12 +229,11 @@ func handleAddComment(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"code": "invalid_body", "message": "body is required"})
 		return
 	}
-	comment := map[string]any{
+	writeJSON(w, http.StatusCreated, map[string]any{
 		"id": "cmt_new", "body": body["body"],
 		"author":    alice,
 		"createdAt": now.Format(time.RFC3339),
-	}
-	writeJSON(w, http.StatusCreated, comment)
+	})
 }
 
 func handleGetMe(w http.ResponseWriter, r *http.Request) {
@@ -231,52 +255,60 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusNotFound, map[string]any{"code": "not_found", "message": "user not found"})
 }
 
-// ── main ─────────────────────────────────────────────────────────────────────
+// ── main ──────────────────────────────────────────────────────────────────────
 
 func main() {
 	h, err := scalar.New(
 		scalar.WithSpecURL("/openapi.json"),
-		scalar.WithTheme(scalar.ThemeDefault),
+
+		// Pink-accented dark theme
+		scalar.WithTheme(scalar.ThemeNone),
+		scalar.WithCustomCSS(pinkCSS),
+
+		// Branded header
 		scalar.WithBranding(scalar.Branding{
+			LogoURL:    "https://fakeimg.pl/32x32/ff2d78/ffffff?text=A&font=lobster",
+			LogoAlt:    "Acme",
 			Title:      "Acme Corp",
-			Subtitle:   "Tasks API v2 — OpenAPI 3.1",
-			FaviconURL: "/favicon.svg",
+			Subtitle:   "Platform API",
+			FaviconURL: "https://fakeimg.pl/32x32/ff2d78/ffffff?text=A",
+			FaviconType: "image/png",
 		}),
-		scalar.WithBaseServerURL("http://localhost:8080"),
+		scalar.WithEnvBadge("staging"),
+
+		// Features
+		scalar.WithBaseServerURL("http://localhost:8084"),
+		scalar.WithLayout(scalar.LayoutModern),
+		scalar.WithShowOperationID(),
 		scalar.With(scalar.DisableAgent, scalar.DisableMCP, scalar.DarkMode),
-		scalar.WithPageTitle("Tasks API v2"),
+		scalar.WithShowDeveloperTools(scalar.ShowToolbarLocalhost),
+
+		scalar.WithPageTitle("Acme Platform API"),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	mux := http.NewServeMux()
-
-	// Scalar UI + vendored JS
 	mux.Handle("/", h)
 
-	// Spec — embedded at compile time, always available regardless of CWD
 	mux.HandleFunc("GET /openapi.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(specJSON)
 	})
 
-	// Tasks
 	mux.HandleFunc("GET /tasks", handleListTasks)
 	mux.HandleFunc("POST /tasks", handleCreateTask)
 	mux.HandleFunc("GET /tasks/{id}", handleGetTask)
 	mux.HandleFunc("PATCH /tasks/{id}", handleUpdateTask)
 	mux.HandleFunc("DELETE /tasks/{id}", handleDeleteTask)
-
-	// Comments
 	mux.HandleFunc("GET /tasks/{id}/comments", handleListComments)
 	mux.HandleFunc("POST /tasks/{id}/comments", handleAddComment)
-
-	// Users
 	mux.HandleFunc("GET /users/me", handleGetMe)
 	mux.HandleFunc("GET /users/{id}", handleGetUser)
 
-	log.Println("listening on http://localhost:8080")
+	log.Println("listening on http://localhost:8084")
 	log.Println("hint: use any string starting with 'Bearer ' as the auth token")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8084", mux))
 }
+

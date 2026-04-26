@@ -1,3 +1,3 @@
-module github.com/nopereta/goscalar
+module github.com/nopereta/go-scalar
 
-go 1.26.1
+go 1.26

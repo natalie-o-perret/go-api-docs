@@ -1,0 +1,371 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Tasks API",
+    "version": "2.0.0",
+    "description": "A simple task-management API — used as the go-scalar basic example.",
+    "contact": { "name": "Acme Platform", "url": "https://acme.example.com" },
+    "license": { "name": "MIT" }
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Local dev" },
+    { "url": "https://api.acme.example.com/v2", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "tasks", "description": "Task operations" },
+    { "name": "users", "description": "User operations" }
+  ],
+  "paths": {
+    "/tasks": {
+      "get": {
+        "operationId": "listTasks",
+        "summary": "List tasks",
+        "tags": ["tasks"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["open", "in_progress", "done"] }
+          },
+          {
+            "name": "assignee",
+            "in": "query",
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20, "maximum": 100 }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Pagination cursor returned by previous response.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of tasks",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TaskPage" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "operationId": "createTask",
+        "summary": "Create a task",
+        "tags": ["tasks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaskInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/tasks/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "format": "uuid" }
+        }
+      ],
+      "get": {
+        "operationId": "getTask",
+        "summary": "Get a task",
+        "tags": ["tasks"],
+        "responses": {
+          "200": {
+            "description": "Task found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "patch": {
+        "operationId": "updateTask",
+        "summary": "Update a task",
+        "tags": ["tasks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TaskPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Task" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "delete": {
+        "operationId": "deleteTask",
+        "summary": "Delete a task",
+        "tags": ["tasks"],
+        "responses": {
+          "204": { "description": "Task deleted" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/tasks/{id}/comments": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "format": "uuid" }
+        }
+      ],
+      "get": {
+        "operationId": "listComments",
+        "summary": "List comments on a task",
+        "tags": ["tasks"],
+        "responses": {
+          "200": {
+            "description": "List of comments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Comment" }
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "operationId": "addComment",
+        "summary": "Add a comment to a task",
+        "tags": ["tasks"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CommentInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment added",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Comment" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/users/me": {
+      "get": {
+        "operationId": "getMe",
+        "summary": "Get current user",
+        "tags": ["users"],
+        "responses": {
+          "200": {
+            "description": "Current authenticated user",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "format": "uuid" }
+        }
+      ],
+      "get": {
+        "operationId": "getUser",
+        "summary": "Get a user by ID",
+        "tags": ["users"],
+        "responses": {
+          "200": {
+            "description": "User found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Task": {
+        "type": "object",
+        "required": ["id", "title", "status", "createdAt"],
+        "properties": {
+          "id":          { "type": "string", "format": "uuid", "readOnly": true },
+          "title":       { "type": "string", "minLength": 1, "maxLength": 255 },
+          "description": { "type": "string" },
+          "status":      { "type": "string", "enum": ["open", "in_progress", "done"] },
+          "priority":    { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+          "assignee":    { "$ref": "#/components/schemas/UserRef" },
+          "dueAt":       { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt":   { "type": "string", "format": "date-time", "readOnly": true },
+          "updatedAt":   { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "TaskInput": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title":       { "type": "string", "minLength": 1, "maxLength": 255 },
+          "description": { "type": "string" },
+          "priority":    { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+          "assigneeId":  { "type": "string", "format": "uuid" },
+          "dueAt":       { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "TaskPatch": {
+        "type": "object",
+        "properties": {
+          "title":       { "type": "string", "minLength": 1, "maxLength": 255 },
+          "description": { "type": "string" },
+          "status":      { "type": "string", "enum": ["open", "in_progress", "done"] },
+          "priority":    { "type": "string", "enum": ["low", "medium", "high"] },
+          "assigneeId":  { "type": "string", "format": "uuid", "nullable": true },
+          "dueAt":       { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "TaskPage": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items":      { "type": "array", "items": { "$ref": "#/components/schemas/Task" } },
+          "nextCursor": { "type": "string", "nullable": true }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "required": ["id", "body", "author", "createdAt"],
+        "properties": {
+          "id":        { "type": "string", "format": "uuid", "readOnly": true },
+          "body":      { "type": "string", "minLength": 1 },
+          "author":    { "$ref": "#/components/schemas/UserRef" },
+          "createdAt": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "CommentInput": {
+        "type": "object",
+        "required": ["body"],
+        "properties": {
+          "body": { "type": "string", "minLength": 1 }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "name", "email"],
+        "properties": {
+          "id":        { "type": "string", "format": "uuid", "readOnly": true },
+          "name":      { "type": "string" },
+          "email":     { "type": "string", "format": "email" },
+          "avatarURL": { "type": "string", "format": "uri", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "UserRef": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id":   { "type": "string", "format": "uuid" },
+          "name": { "type": "string" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code":    { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid credentials",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": { "schema": { "$ref": "#/components/schemas/Error" } }
+        }
+      }
+    }
+  }
+}
+

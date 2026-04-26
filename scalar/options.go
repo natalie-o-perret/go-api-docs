@@ -77,8 +77,15 @@ func WithLightMode() Option {
 }
 
 // WithCustomCSS injects custom CSS via the Scalar config.
+// Multiple calls accumulate: each new block is appended after the previous one.
 func WithCustomCSS(css string) Option {
-	return func(c *config) { c.scalarConfig["customCss"] = css }
+	return func(c *config) {
+		existing, _ := c.scalarConfig["customCss"].(string)
+		if existing != "" {
+			css = existing + "\n" + css
+		}
+		c.scalarConfig["customCss"] = css
+	}
 }
 
 // Visibility controls a tri-state show/hide value used by several Scalar options.
@@ -156,22 +163,22 @@ func WithShowOperationID() Option {
 type Flag uint
 
 const (
-	DisableAgent      Flag = 1 << iota // agent.disabled = true
-	DisableMCP                         // mcp.disabled = true
-	HideClientButton                   // hideClientButton = true
-	HideModels                         // hideModels = true
-	HideDownloadButton                 // hideDownloadButton = true
-	HideSearch                         // hideSearch = true
-	ShowOperationID                    // showOperationId = true
-	DarkMode                           // darkMode = true
-	LightMode                          // darkMode = false (overrides DarkMode if both set)
+	DisableAgent       Flag = 1 << iota // agent.disabled = true
+	DisableMCP                          // mcp.disabled = true
+	HideClientButton                    // hideClientButton = true
+	HideModels                          // hideModels = true
+	HideDownloadButton                  // hideDownloadButton = true
+	HideSearch                          // hideSearch = true
+	ShowOperationID                     // showOperationId = true
+	DarkMode                            // darkMode = true
+	LightMode                           // darkMode = false (overrides DarkMode if both set)
 )
 
 // With applies one or more boolean feature flags in a single option.
 // Flags may be combined with | or passed as separate arguments — equivalent either way.
 //
-//	gos.With(gos.DisableAgent, gos.DisableMCP, gos.HideClientButton)
-//	gos.With(gos.DisableAgent | gos.DisableMCP | gos.HideClientButton)
+//	scalar.With(scalar.DisableAgent, scalar.DisableMCP, scalar.HideClientButton)
+//	scalar.With(scalar.DisableAgent | scalar.DisableMCP | scalar.HideClientButton)
 func With(flags ...Flag) Option {
 	return func(c *config) {
 		var combined Flag
@@ -249,3 +256,4 @@ func WithJSPath(path string) Option {
 func WithTemplate(tmpl *template.Template) Option {
 	return func(c *config) { c.tmpl = tmpl }
 }
+

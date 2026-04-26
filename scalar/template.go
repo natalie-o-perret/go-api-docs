@@ -4,7 +4,7 @@ import "html/template"
 
 // defaultTemplate returns the built-in page template.
 func defaultTemplate() *template.Template {
-	return template.Must(template.New("gos").Parse(defaultPageHTML))
+	return template.Must(template.New("scalar").Parse(defaultPageHTML))
 }
 
 // defaultPageHTML is the built-in Scalar page template, receives PageData.
@@ -113,3 +113,4 @@ const defaultPageHTML = `<!DOCTYPE html>
 </body>
 </html>
 `
+
