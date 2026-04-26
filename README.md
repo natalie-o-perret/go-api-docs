@@ -471,15 +471,15 @@ See [`COMPARISON.md`](COMPARISON.md) for full details.
 
 | Path                         | Stack                 | What it shows                                                           |
 |------------------------------|-----------------------|-------------------------------------------------------------------------|
-| `example/scalar/basic`       | scalar                | Petstore proxied via localhost                                          |
-| `example/scalar/cdn`         | scalar                | Load Scalar from jsDelivr CDN                                           |
-| `example/scalar/full`        | scalar                | Pink theme, branding, env badge, live Tasks API                         |
-| `example/scalar/multi-spec`  | scalar                | v1 + v2 dropdown, Swagger 2.0 + OpenAPI 3.1                             |
-| `example/scalar/openpotato`  | scalar                | Two live public APIs, reverse-proxy                                     |
-| `example/scalar/swagger2`    | scalar                | Scalar rendering a **Swagger 2.0** spec                                 |
-| `example/swagger/basic`      | swagger               | Petstore via Swagger UI                                                 |
-| `example/swagger/full`       | swagger               | Branding, dark mode, env badge, live Tasks API                          |
-| `example/swagger/openapi`    | openapi + swagger     | **Spec auto-generated** from Go types, Tasks API                        |
+| `examples/ui/scalar/basic`       | scalar                | Petstore proxied via localhost                                          |
+| `examples/ui/scalar/cdn`         | scalar                | Load Scalar from jsDelivr CDN                                           |
+| `examples/ui/scalar/full`        | scalar                | Pink theme, branding, env badge, live Tasks API                         |
+| `examples/ui/scalar/multi-spec`  | scalar                | v1 + v2 dropdown, Swagger 2.0 + OpenAPI 3.1                             |
+| `examples/ui/scalar/openpotato`  | scalar                | Two live public APIs, reverse-proxy                                     |
+| `examples/ui/scalar/swagger2`    | scalar                | Scalar rendering a **Swagger 2.0** spec                                 |
+| `examples/ui/swagger/basic`      | swagger               | Petstore via Swagger UI                                                 |
+| `examples/ui/swagger/full`       | swagger               | Branding, dark mode, env badge, live Tasks API                          |
+| `examples/ui/swagger/openapi`    | openapi + swagger     | **Spec auto-generated** from Go types, Tasks API                        |
 | `example/openapi/stdhttp`    | openapi only          | Plain `net/http` - zero framework, also shows `//go:generate goapi-gen` |
 | `example/openapi/chi`        | openapi + chi         | Typed router mounted inside chi                                         |
 | `example/openapi/gorilla`    | openapi + gorilla/mux | Typed router mounted inside gorilla/mux                                 |
@@ -498,7 +498,7 @@ cd example/openapi/gin        && go run . && open http://localhost:9093
 cd example/openapi/echo       && go run . && open http://localhost:9094
 cd example/openapi/fiber      && go run . && open http://localhost:9095
 cd example/openapi/httprouter && go run . && open http://localhost:9096
-cd example/swagger/openapi    && go run . && open http://localhost:9083
+cd examples/ui/swagger/openapi    && go run . && open http://localhost:9083
 ```
 
 ---

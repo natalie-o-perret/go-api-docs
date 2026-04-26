@@ -1,0 +1,12 @@
+# JetBrains IDEs
+.idea/
+
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go workspace
+
