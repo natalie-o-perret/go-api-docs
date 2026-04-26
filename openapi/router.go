@@ -15,7 +15,24 @@ type Router struct {
 	mux        *http.ServeMux
 	doc        Document
 	components map[string]Schema
+	pathValue  PathValueFn // how to extract path params (defaults to r.PathValue)
 }
+
+// PathValueFn extracts a named URL path parameter from a request.
+// Swap this to integrate with any router that carries path params differently.
+//
+//	// net/http 1.22+ (default):
+//	func(r *http.Request, name string) string { return r.PathValue(name) }
+//
+//	// chi:
+//	func(r *http.Request, name string) string { return chi.URLParam(r, name) }
+//
+//	// gorilla/mux:
+//	func(r *http.Request, name string) string { return mux.Vars(r)[name] }
+type PathValueFn func(r *http.Request, name string) string
+
+// stdPathValue is the default extractor for net/http 1.22+.
+func stdPathValue(r *http.Request, name string) string { return r.PathValue(name) }
 
 // New creates a Router with the given API info.
 func New(info Info, opts ...RouterOption) *Router {
@@ -27,6 +44,7 @@ func New(info Info, opts ...RouterOption) *Router {
 			Paths:   map[string]*PathItem{},
 		},
 		components: map[string]Schema{},
+		pathValue:  stdPathValue,
 	}
 	for _, o := range opts {
 		o(r)
@@ -43,7 +61,11 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // OpenAPI returns the generated spec as JSON bytes.
 func (r *Router) OpenAPI() []byte {
-	r.doc.Components = Components{Schemas: r.components}
+	// Preserve SecuritySchemes set via WithSecurityScheme — read before overwrite.
+	r.doc.Components = Components{
+		Schemas:         r.components,
+		SecuritySchemes: r.doc.Components.SecuritySchemes,
+	}
 	b, _ := json.MarshalIndent(r.doc, "", "  ")
 	return b
 }
@@ -77,6 +99,25 @@ func setOperation(item *PathItem, method string, op *Operation) {
 	}
 }
 
+// ── Interfaces ────────────────────────────────────────────────────────────────
+
+// Validator is an optional interface input structs can implement to perform
+// custom validation after the standard decoding step.
+//
+// If the input type implements Validate(), it is called automatically after
+// all path/query/header params and the JSON body have been decoded.
+// Return a non-nil error to reject the request with a 400 Bad Request.
+//
+//	func (in *CreateTaskInput) Validate() error {
+//	    if in.Title == "" {
+//	        return errors.New("title is required")
+//	    }
+//	    return nil
+//	}
+type Validator interface {
+	Validate() error
+}
+
 // ── Route registration ────────────────────────────────────────────────────────
 
 // RouteOption customises a registered route's spec entry.
@@ -108,8 +149,30 @@ func Security(schemes ...string) RouteOption {
 	}
 }
 
+// Responses merges extra status-code responses into the operation's spec entry.
+// Use this to document error codes beyond the auto-generated success response.
+//
+//	openapi.Responses(map[string]openapi.Response{
+//	    "404": {Description: "Task not found"},
+//	    "422": {Description: "Validation error"},
+//	})
+func Responses(extra map[string]Response) RouteOption {
+	return func(o *Operation) {
+		for code, resp := range extra {
+			o.Responses[code] = resp
+		}
+	}
+}
+
 // RouterOption tweaks the Router itself.
 type RouterOption func(*Router)
+
+// WithPathValueFn sets a custom path-parameter extractor.
+// Use this to integrate with routers other than the standard net/http ServeMux.
+// See [PathValueFn] for examples.
+func WithPathValueFn(fn PathValueFn) RouterOption {
+	return func(r *Router) { r.pathValue = fn }
+}
 
 // WithServer adds a server entry to the spec.
 func WithServer(url, description string) RouterOption {
@@ -128,8 +191,33 @@ func WithSecurityScheme(name string, scheme SecurityScheme) RouterOption {
 	}
 }
 
+// WithTag adds a tag with a description to the root spec.
+// Tags appear in the Scalar/Swagger UI sidebar and group related operations.
+//
+//	openapi.WithTag("tasks", "CRUD operations for the task resource")
+func WithTag(name, description string) RouterOption {
+	return func(r *Router) {
+		r.doc.Tags = append(r.doc.Tags, Tag{Name: name, Description: description})
+	}
+}
+
 // BearerAuth is a pre-built HTTP Bearer security scheme.
 var BearerAuth = SecurityScheme{Type: "http", Scheme: "bearer", BearerFormat: "JWT"}
+
+// BasicAuth is a pre-built HTTP Basic security scheme.
+var BasicAuth = SecurityScheme{Type: "http", Scheme: "basic"}
+
+// APIKeyHeader returns a pre-built API-key-in-header security scheme.
+//
+//	openapi.WithSecurityScheme("X-API-Key", openapi.APIKeyHeader("X-API-Key"))
+func APIKeyHeader(name string) SecurityScheme {
+	return SecurityScheme{Type: "apiKey", In: "header", Name: name}
+}
+
+// APIKeyQuery returns a pre-built API-key-in-query security scheme.
+func APIKeyQuery(name string) SecurityScheme {
+	return SecurityScheme{Type: "apiKey", In: "query", Name: name}
+}
 
 // ── Typed registration ────────────────────────────────────────────────────────
 
@@ -148,12 +236,12 @@ var BearerAuth = SecurityScheme{Type: "http", Scheme: "bearer", BearerFormat: "J
 // Use struct{} for In when there is no input, and struct{} for Out when the
 // handler returns no body (204).
 func Handle[In, Out any](r *Router, method, path string, fn func(*http.Request, *In) (*Out, error), opts ...RouteOption) {
-	op := buildOperation[In, Out](method, path, r.components, opts...)
+	op := buildOperation[In, Out](method, r.components, opts...)
 	setOperation(r.pathItem(path), method, op)
 
 	r.mux.HandleFunc(method+" "+path, func(w http.ResponseWriter, req *http.Request) {
 		var in In
-		if err := decodeInput(req, &in); err != nil {
+		if err := decodeInput(req, &in, r.pathValue); err != nil {
 			writeErr(w, http.StatusBadRequest, "invalid_input", err.Error())
 			return
 		}
@@ -187,11 +275,17 @@ func Handle[In, Out any](r *Router, method, path string, fn func(*http.Request, 
 
 // ── Convenience wrappers ──────────────────────────────────────────────────────
 
-// GET registers a GET handler with no request body.
+// GET registers a GET handler. Use Handle[In, Out] directly when the handler
+// needs path/query parameters via an input struct.
 func GET[Out any](r *Router, path string, fn func(*http.Request) (*Out, error), opts ...RouteOption) {
 	Handle[struct{}, Out](r, http.MethodGet, path, func(req *http.Request, _ *struct{}) (*Out, error) {
 		return fn(req)
 	}, opts...)
+}
+
+// GETWithInput registers a GET handler that receives path/query params via In.
+func GETWithInput[In, Out any](r *Router, path string, fn func(*http.Request, *In) (*Out, error), opts ...RouteOption) {
+	Handle[In, Out](r, http.MethodGet, path, fn, opts...)
 }
 
 // POST registers a POST handler.
@@ -218,7 +312,7 @@ func DELETE[In any](r *Router, path string, fn func(*http.Request, *In) error, o
 
 // ── Operation builder ─────────────────────────────────────────────────────────
 
-func buildOperation[In, Out any](method, path string, components map[string]Schema, opts ...RouteOption) *Operation {
+func buildOperation[In, Out any](method string, components map[string]Schema, opts ...RouteOption) *Operation {
 	op := &Operation{
 		Responses: map[string]Response{},
 	}
@@ -243,7 +337,7 @@ func buildOperation[In, Out any](method, path string, components map[string]Sche
 			p := Parameter{
 				Name:        paramName,
 				In:          paramIn,
-				Required:    paramIn == "path",
+				Required:    paramIn == "path" || f.Tag.Get("required") == "true",
 				Description: f.Tag.Get("doc"),
 				Schema:      schemaForType(f.Type, components),
 			}
@@ -254,6 +348,7 @@ func buildOperation[In, Out any](method, path string, components map[string]Sche
 				}
 				p.Schema.Enum = enums
 			}
+			applyConstraintTags(&p.Schema, f.Tag)
 			op.Parameters = append(op.Parameters, p)
 		}
 	}
@@ -302,7 +397,7 @@ func buildOperation[In, Out any](method, path string, components map[string]Sche
 
 // ── Input decoding ────────────────────────────────────────────────────────────
 
-func decodeInput(r *http.Request, dst any) error {
+func decodeInput(r *http.Request, dst any, pathValue PathValueFn) error {
 	v := reflect.ValueOf(dst).Elem()
 	t := v.Type()
 	if t.Kind() != reflect.Struct {
@@ -318,7 +413,7 @@ func decodeInput(r *http.Request, dst any) error {
 		paramIn, paramName := paramLocation(f)
 		switch paramIn {
 		case "path":
-			raw := r.PathValue(paramName)
+			raw := pathValue(r, paramName)
 			if err := setField(v.Field(i), raw); err != nil {
 				return fmt.Errorf("path param %q: %w", paramName, err)
 			}
@@ -367,6 +462,13 @@ func decodeInput(r *http.Request, dst any) error {
 				return fmt.Errorf("body field %q: %w", key, err)
 			}
 			fv.Set(dest.Elem())
+		}
+	}
+
+	// If the input type implements Validator, run custom validation after decode.
+	if val, ok := dst.(Validator); ok {
+		if err := val.Validate(); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -478,6 +580,7 @@ func bodySchemaForType(t reflect.Type, components map[string]Schema) Schema {
 				s.Enum = append(s.Enum, strings.TrimSpace(v))
 			}
 		}
+		applyConstraintTags(&s, f.Tag)
 		props[name] = s
 		omitempty := strings.Contains(f.Tag.Get("json"), "omitempty")
 		if f.Type.Kind() != reflect.Ptr && !omitempty && f.Tag.Get("required") != "false" {
@@ -539,4 +642,3 @@ func writeErr(w http.ResponseWriter, status int, code, message string) {
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(ErrorBody{Code: code, Message: message})
 }
-

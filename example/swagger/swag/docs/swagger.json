@@ -1,0 +1,241 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "A simple task-management service — swagger/swag example.",
+    "title": "Tasks API",
+    "contact": {},
+    "version": "2.0.0"
+  },
+  "host": "localhost:9082",
+  "basePath": "/",
+  "paths": {
+    "/tasks": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ],
+        "summary": "List tasks",
+        "parameters": [
+          {
+            "enum": [
+              "open",
+              "in_progress",
+              "done"
+            ],
+            "type": "string",
+            "description": "Filter by status",
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/main.Task"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/main.ErrorResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Create a task",
+        "parameters": [
+          {
+            "description": "Task to create",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/main.TaskInput"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/main.Task"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/main.ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/main.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{id}": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Get a task",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Task ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/main.Task"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/main.ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Delete a task",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Task ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "schema": {
+              "$ref": "#/definitions/main.ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "main.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "example": "not_found"
+        },
+        "message": {
+          "type": "string",
+          "example": "task not found"
+        }
+      }
+    },
+    "main.Task": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2026-04-25T10:00:00Z"
+        },
+        "id": {
+          "type": "string",
+          "example": "task_1"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "in_progress",
+            "done"
+          ],
+          "example": "open"
+        },
+        "title": {
+          "type": "string",
+          "example": "Design onboarding"
+        }
+      }
+    },
+    "main.TaskInput": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "in_progress",
+            "done"
+          ],
+          "example": "open"
+        },
+        "title": {
+          "type": "string",
+          "example": "My new task"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}

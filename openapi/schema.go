@@ -2,11 +2,54 @@ package openapi
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
-var timeType = reflect.TypeOf(time.Time{})
+// SchemaProvider is an optional interface types can implement to provide their
+// own OpenAPI schema instead of having one derived via reflection.
+//
+// This is the compile-time escape hatch: implement it on your type and the
+// reflection path is bypassed entirely for that type.
+//
+//	func (Task) OpenAPISchema() openapi.Schema {
+//	    return openapi.Schema{
+//	        Type: "object",
+//	        Properties: map[string]openapi.Schema{
+//	            "id":    {Type: "string", ReadOnly: true},
+//	            "title": {Type: "string"},
+//	        },
+//	        Required: []string{"id", "title"},
+//	    }
+//	}
+type SchemaProvider interface {
+	OpenAPISchema() Schema
+}
+
+var (
+	timeType           = reflect.TypeOf(time.Time{})
+	schemaProviderType = reflect.TypeOf((*SchemaProvider)(nil)).Elem()
+
+	// schemaCache caches derived schemas by reflect.Type so that each
+	// type's schema is computed exactly once across the whole process lifetime,
+	// no matter how many routers are created.
+	schemaCache schemaTypeCache
+)
+
+// schemaTypeCache is a thin typed wrapper around sync.Map keyed by reflect.Type.
+type schemaTypeCache struct{ m sync.Map }
+
+func (c *schemaTypeCache) load(t reflect.Type) (Schema, bool) {
+	v, ok := c.m.Load(t)
+	if !ok {
+		return Schema{}, false
+	}
+	return v.(Schema), true
+}
+
+func (c *schemaTypeCache) store(t reflect.Type, s Schema) { c.m.Store(t, s) }
 
 // schemaForType derives a JSON Schema from a Go reflect.Type.
 // Struct types are inlined; named struct types are also registered in the
@@ -17,6 +60,23 @@ func schemaForType(t reflect.Type, components map[string]Schema) Schema {
 	for t.Kind() == reflect.Ptr {
 		nullable = true
 		t = t.Elem()
+	}
+
+	// If the type (or its pointer) implements SchemaProvider, use that schema
+	// directly — no reflection needed for opted-in types.
+	if t.Implements(schemaProviderType) {
+		s := reflect.Zero(t).Interface().(SchemaProvider).OpenAPISchema()
+		if nullable {
+			s.Nullable = true
+		}
+		return s
+	}
+	if reflect.PointerTo(t).Implements(schemaProviderType) {
+		s := reflect.New(t).Interface().(SchemaProvider).OpenAPISchema()
+		if nullable {
+			s.Nullable = true
+		}
+		return s
 	}
 
 	s := deriveSchema(t, components)
@@ -66,17 +126,29 @@ func deriveSchema(t reflect.Type, components map[string]Schema) Schema {
 
 // schemaForStruct builds an object schema from struct fields.
 // Named types (t.Name() != "") are registered in components and returned as $ref.
+// The derived schema is stored in globalSchemaCache so it is computed only once.
 func schemaForStruct(t reflect.Type, components map[string]Schema) Schema {
 	name := t.Name()
-	if name != "" {
-		if _, ok := components[name]; !ok {
-			// Register a placeholder first to break recursive cycles.
-			components[name] = Schema{}
-			components[name] = buildObjectSchema(t, components)
-		}
+	if name == "" {
+		return buildObjectSchema(t, components)
+	}
+
+	if _, ok := components[name]; ok {
 		return Schema{Ref: "#/components/schemas/" + name}
 	}
-	return buildObjectSchema(t, components)
+
+	// Check the global cache first.
+	if cached, ok := schemaCache.load(t); ok {
+		components[name] = cached
+		return Schema{Ref: "#/components/schemas/" + name}
+	}
+
+	// Register a placeholder first to break recursive cycles.
+	components[name] = Schema{}
+	s := buildObjectSchema(t, components)
+	components[name] = s
+	schemaCache.store(t, s)
+	return Schema{Ref: "#/components/schemas/" + name}
 }
 
 func buildObjectSchema(t reflect.Type, components map[string]Schema) Schema {
@@ -118,6 +190,7 @@ func buildObjectSchema(t reflect.Type, components map[string]Schema) Schema {
 		if f.Tag.Get("writeOnly") == "true" {
 			s.WriteOnly = true
 		}
+		applyConstraintTags(&s, f.Tag)
 
 		props[name] = s
 
@@ -155,3 +228,52 @@ func lcFirst(s string) string {
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
+// applyConstraintTags reads validation/format struct tags and sets the
+// corresponding Schema fields.  Supported tags:
+//
+//	format:"uuid"        — override the schema format
+//	pattern:"^[a-z]+$"  — regexp for strings
+//	minLength:"1"        — minimum string length
+//	maxLength:"255"      — maximum string length
+//	min:"0"              — minimum numeric value
+//	max:"100"            — maximum numeric value
+//	minItems:"1"         — minimum array length
+//	maxItems:"50"        — maximum array length
+func applyConstraintTags(s *Schema, tag reflect.StructTag) {
+	if v := tag.Get("format"); v != "" {
+		s.Format = v
+	}
+	if v := tag.Get("pattern"); v != "" {
+		s.Pattern = v
+	}
+	if v := tag.Get("minLength"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			s.MinLength = &n
+		}
+	}
+	if v := tag.Get("maxLength"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			s.MaxLength = &n
+		}
+	}
+	if v := tag.Get("min"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			s.Minimum = &f
+		}
+	}
+	if v := tag.Get("max"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			s.Maximum = &f
+		}
+	}
+	if v := tag.Get("minItems"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			s.MinItems = &n
+		}
+	}
+	if v := tag.Get("maxItems"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			s.MaxItems = &n
+		}
+	}
+}

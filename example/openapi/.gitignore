@@ -1,0 +1,10 @@
+# compiled example binaries — never commit these
+chi
+echo
+fiber
+gin
+gorilla
+httprouter
+stdhttp
+goapi-gen
+

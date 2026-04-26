@@ -10,10 +10,11 @@ linters:
     - ineffassign     # assignments whose value is never used
     - govet           # go vet checks
 
-linters-settings:
-  errcheck:
-    # Ignore errors from common "fire and forget" patterns.
-    ignore: "fmt:.*,io/fs:PathError"
+linters:
+  settings:
+    errcheck:
+      # Ignore errors from common "fire and forget" patterns.
+      ignore: "fmt:.*,io/fs:PathError"
 
 issues:
   # Treat every finding as an error — zero warnings policy.

@@ -1,13 +1,13 @@
-// Example: swagger/basic — Swagger UI rendering the public Petstore spec.
+// Example: basic — Swagger Petstore proxied through localhost.
 //
-// The Petstore spec is fetched from petstore3.swagger.io at startup and its
-// servers block is rewritten to point at the local /proxy/ prefix so that
-// "Try it out" requests flow through this server (no CORS issues).
+// The Petstore spec is fetched at startup and its servers block is rewritten to
+// point at the local /proxy/ prefix.  "Try it" requests flow through this
+// server rather than hitting petstore3.swagger.io directly — no CORS issues.
 //
 // Run from this directory:
 //
 //	go run .
-//	open http://localhost:9080
+//	open http://localhost:8080
 package main
 
 import (
@@ -18,19 +18,19 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	scalar "github.com/nopereta/go-api-docs/ui/scalar"
 )
 
 const (
-	listenAddr   = ":9080"
-	baseURL      = "http://localhost:9080"
+	listenAddr   = ":8080"
+	baseURL      = "http://localhost:8080"
 	upstreamBase = "https://petstore3.swagger.io"
 	specEndpoint = upstreamBase + "/api/v3/openapi.json"
 	proxyPrefix  = "/proxy"
 )
 
 func main() {
-	// ── 1. fetch spec ─────────────────────────────────────────────────────────
+	// ── 1. fetch spec ────────────────────────────────────────────────────────
 	log.Printf("fetching spec from %s …", specEndpoint)
 	resp, err := http.Get(specEndpoint) //nolint:noctx
 	if err != nil {
@@ -57,17 +57,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// ── 3. swagger UI handler ─────────────────────────────────────────────────
-	h, err := swagger.New(
-		swagger.WithSpecURL("/openapi.json"),
-		swagger.WithPageTitle("Petstore API — Swagger UI"),
-		swagger.WithBranding(swagger.Branding{
-			Title:    "Petstore",
-			Subtitle: "OpenAPI 3.0 sample",
-		}),
-		swagger.WithPersistAuthorization(),
-		swagger.WithDisplayRequestDuration(),
-		swagger.WithDocExpansion(swagger.DocExpansionList),
+	// ── 3. scalar handler ────────────────────────────────────────────────────
+	h, err := scalar.New(
+		scalar.WithSpecURL("/openapi.json"),
+		scalar.WithTheme(scalar.ThemeDefault),
+		scalar.With(scalar.DisableAgent, scalar.DisableMCP, scalar.DarkMode),
+		scalar.WithPageTitle("Petstore API"),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -81,7 +76,7 @@ func main() {
 		pr.Out.Host = target.Host
 	}
 
-	// ── 5. routes ─────────────────────────────────────────────────────────────
+	// ── 5. routes ────────────────────────────────────────────────────────────
 	mux := http.NewServeMux()
 	mux.Handle("/", h)
 	mux.HandleFunc("GET /openapi.json", func(w http.ResponseWriter, r *http.Request) {
