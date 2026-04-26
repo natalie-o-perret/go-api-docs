@@ -6,15 +6,15 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/nopereta/go-api-docs)](https://goreportcard.com/report/github.com/nopereta/go-api-docs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Go library where your types define the OpenAPI 3.1 spec — at compile time, with zero drift.**  
+**Go library where your types define the OpenAPI 3.1 spec - at compile time, with zero drift.**  
 No annotations. No code generation. No mandatory tooling. Framework-agnostic.
 
 > [!NOTE]
-> Every other Go OpenAPI solution forces you to maintain two sources of truth — your
+> Every other Go OpenAPI solution forces you to maintain two sources of truth - your
 > Go types and your spec. Rename a field, forget to update the YAML, and your API
 > contract silently lies to every client. This library makes that impossible.
 >
-> `goapi-gen` is an optional CLI for teams that want a static spec snapshot in CI —
+> `goapi-gen` is an optional CLI for teams that want a static spec snapshot in CI -
 > but you never need it to get a fully accurate, live OpenAPI spec.
 
 Three independent packages, zero mandatory dependencies beyond the stdlib:
@@ -43,7 +43,7 @@ Every other Go OpenAPI solution has a fundamental problem:
 
 ## Quick start
 
-### Option A — reflection (runtime, zero setup)
+### Option A - reflection (runtime, zero setup)
 
 The router introspects your types **once at startup** via `reflect` and serves
 `GET /openapi.json` automatically. Nothing to run, nothing to generate.
@@ -56,12 +56,12 @@ openapi.POST[CreateTaskInput, Task](r, "/tasks", createTask)
 http.Handle("/", r) // GET /openapi.json is served automatically
 ```
 
-### Option B — `goapi-gen` (compile-time, static analysis)
+### Option B - `goapi-gen` (compile-time, static analysis)
 
 `goapi-gen` walks your Go source files using `go/ast` + `go/types` and
 produces `openapi.json` **without executing a single line of your code**.
 It reads the same struct tags, the same generic type parameters, the same
-route-option calls — statically, at "compile time".
+route-option calls - statically, at "compile time".
 
 ```bash
 # install once
@@ -182,7 +182,7 @@ http.Handle("/", h)
 
 ---
 
-## `openapi` — typed router + spec generator
+## `openapi` - typed router + spec generator
 
 ### Input struct tags
 
@@ -194,7 +194,7 @@ http.Handle("/", h)
 | *(no tag)*           | JSON body              | Decoded for POST/PUT/PATCH                       |
 | `doc:"…"`            | any                    | Description in spec                              |
 | `example:"…"`        | any                    | Example value                                    |
-| `enum:"a,b,c"`       | string                 | Restricted values — validated in spec            |
+| `enum:"a,b,c"`       | string                 | Restricted values - validated in spec            |
 | `readOnly:"true"`    | any                    | Read-only in response schema                     |
 | `writeOnly:"true"`   | any                    | Write-only in request schema                     |
 | `required:"false"`   | non-pointer body field | Mark body field as optional                      |
@@ -208,7 +208,7 @@ http.Handle("/", h)
 | `minItems:"1"`       | array                  | Minimum item count                               |
 | `maxItems:"50"`      | array                  | Maximum item count                               |
 
-Mix path params, query params and body fields in the same struct — they're dispatched automatically:
+Mix path params, query params and body fields in the same struct - they're dispatched automatically:
 
 ```go
 type UpdateInput struct {
@@ -219,7 +219,7 @@ Status *string `json:"status,omitempty" enum:"open,in_progress,done"`
 openapi.PATCH[UpdateInput, Task](r, "/tasks/{id}", updateTask)
 ```
 
-For cross-field or business-rule validation, implement `Validate()` on the input type — it is called
+For cross-field or business-rule validation, implement `Validate()` on the input type - it is called
 automatically after decode (see [Compile-time escape hatches](#compile-time-escape-hatches)).
 
 ### Registration functions
@@ -267,11 +267,11 @@ openapi.WithPathValueFn(chi.URLParam), // only needed for httprouter-style route
 
 ### Compile-time escape hatches
 
-#### `SchemaProvider` — declare your own schema
+#### `SchemaProvider` - declare your own schema
 
 By default the schema is derived automatically via reflection. If you want
-full compile-time control over a type's schema — or want zero reflection for
-that type — implement `SchemaProvider`:
+full compile-time control over a type's schema - or want zero reflection for
+that type - implement `SchemaProvider`:
 
 ```go
 func (Task) OpenAPISchema() openapi.Schema {
@@ -288,10 +288,10 @@ Required: []string{"id", "title", "status"},
 ```
 
 The reflection path is bypassed entirely for opted-in types. The schema is guaranteed by the
-compiler — rename a field and forget to update `OpenAPISchema`, the method still compiles,
+compiler - rename a field and forget to update `OpenAPISchema`, the method still compiles,
 but your IDE/linter will track the change. This is the closest Go gets to a true compile-time spec.
 
-#### `Validator` — custom validation after decode
+#### `Validator` - custom validation after decode
 
 Implement `Validate() error` on any input struct and it will be called automatically after all
 path/query/header params and the JSON body have been decoded. A non-nil error returns 400 Bad Request.
@@ -308,7 +308,7 @@ return nil
 }
 ```
 
-This is a compile-time contract: adding `Validate()` to a type automatically enables it —
+This is a compile-time contract: adding `Validate()` to a type automatically enables it -
 no registration, no wiring, no annotations needed.
 
 ### Error handling
@@ -337,7 +337,7 @@ openapi.APIKeyQuery("api_key") // API key in query string
 
 ---
 
-## `scalar` — Scalar UI handler
+## `scalar` - Scalar UI handler
 
 The handler serves the HTML page and the **vendored** `@scalar/api-reference` JS bundle from memory.
 Point at a CDN instead with `WithJSPath`.
@@ -384,7 +384,7 @@ make vendor-js VERSION=1.53.0      # pin a specific version
 
 ---
 
-## `swagger` — Swagger UI handler
+## `swagger` - Swagger UI handler
 
 ```go
 h, err := swagger.New(
@@ -418,7 +418,7 @@ make vendor-swagger-ui VERSION=5.19.0
 ## Framework adapters
 
 `openapi.Router` implements `http.Handler` and mounts into any framework that
-can wrap a standard handler — no code changes needed.
+can wrap a standard handler - no code changes needed.
 
 ```go
 // chi
@@ -442,7 +442,7 @@ e.Any("/*", echo.WrapHandler(api)) // echo.WrapHandler does the same
 app := fiber.New()
 app.All("/*", adaptor.HTTPHandler(api))
 
-// httprouter — needs WithPathValueFn because its handler signature differs
+// httprouter - needs WithPathValueFn because its handler signature differs
 type paramsKey struct{}
 api := openapi.New(info, openapi.WithPathValueFn(func (r *http.Request, name string) string {
 ps, _ := r.Context().Value(paramsKey{}).(httprouter.Params)
@@ -461,7 +461,7 @@ router.NotFound = api // /openapi.json + anything else
 ```
 
 Because `openapi.Router` uses its own stdlib mux internally, path params are always set via
-`r.PathValue()` — no `WithPathValueFn` needed for the mount-at-root pattern. Each framework's
+`r.PathValue()` - no `WithPathValueFn` needed for the mount-at-root pattern. Each framework's
 middleware (auth, CORS, rate-limit, …) wraps the whole thing transparently.
 See [`COMPARISON.md`](COMPARISON.md) for full details.
 
@@ -480,7 +480,7 @@ See [`COMPARISON.md`](COMPARISON.md) for full details.
 | `example/swagger/basic`      | swagger               | Petstore via Swagger UI                                                 |
 | `example/swagger/full`       | swagger               | Branding, dark mode, env badge, live Tasks API                          |
 | `example/swagger/openapi`    | openapi + swagger     | **Spec auto-generated** from Go types, Tasks API                        |
-| `example/openapi/stdhttp`    | openapi only          | Plain `net/http` — zero framework, also shows `//go:generate goapi-gen` |
+| `example/openapi/stdhttp`    | openapi only          | Plain `net/http` - zero framework, also shows `//go:generate goapi-gen` |
 | `example/openapi/chi`        | openapi + chi         | Typed router mounted inside chi                                         |
 | `example/openapi/gorilla`    | openapi + gorilla/mux | Typed router mounted inside gorilla/mux                                 |
 | `example/openapi/gin`        | openapi + gin         | Typed router wrapped with `gin.WrapH`                                   |
