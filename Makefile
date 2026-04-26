@@ -1,8 +1,9 @@
-SCALAR_VERSION  ?= 1.52.6
-SWAGGER_VERSION ?= 5.18.2
-REDOC_VERSION   ?= 2.2.0
+SCALAR_VERSION   ?= 1.52.6
+SWAGGER_VERSION  ?= 5.18.2
+REDOC_VERSION    ?= 2.2.0
+ELEMENTS_VERSION ?= 8.4.0
 
-.PHONY: vendor-js vendor-swagger-ui vendor-redoc gen-swagger-swag install-goapi-gen test lint
+.PHONY: vendor-js vendor-swagger-ui vendor-redoc vendor-elements gen-swagger-swag install-goapi-gen test lint
 
 ## install-goapi-gen: install the static spec generator into $GOPATH/bin.
 ##   go generate ./...   will then produce openapi.json with zero runtime.
@@ -37,6 +38,17 @@ vendor-redoc:
 	curl -sL "https://cdn.jsdelivr.net/npm/redoc@$(REDOC_VERSION)/bundles/redoc.standalone.js" \
 	  -o ui/redoc/assets/redoc.standalone.min.js
 	@echo "vendored redoc v$(REDOC_VERSION) → $$(wc -c < ui/redoc/assets/redoc.standalone.min.js) bytes"
+
+## vendor-elements: download a specific @stoplight/elements release.
+##   make vendor-elements VERSION=8.5.0
+vendor-elements:
+	curl -sL "https://cdn.jsdelivr.net/npm/@stoplight/elements@$(ELEMENTS_VERSION)/web-components.min.js" \
+	  -o ui/elements/assets/elements.min.js
+	curl -sL "https://cdn.jsdelivr.net/npm/@stoplight/elements@$(ELEMENTS_VERSION)/styles.min.css" \
+	  -o ui/elements/assets/elements.min.css
+	@echo "vendored elements v$(ELEMENTS_VERSION)"
+	@echo "  js  → $$(wc -c < ui/elements/assets/elements.min.js) bytes"
+	@echo "  css → $$(wc -c < ui/elements/assets/elements.min.css) bytes"
 
 ## gen-swagger-swag: regenerate the OpenAPI spec for example/swagger/swag from annotations.
 gen-swagger-swag:

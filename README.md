@@ -19,12 +19,13 @@ No annotations. No code generation. No mandatory tooling. Framework-agnostic.
 
 Three independent packages, zero mandatory dependencies beyond the stdlib:
 
-| Package      | Import path                                  | What it does                                         |
-|--------------|----------------------------------------------|------------------------------------------------------|
-| `openapi`    | `github.com/nopereta/go-api-docs/openapi`    | Typed router that auto-generates an OpenAPI 3.1 spec |
-| `ui/scalar`  | `github.com/nopereta/go-api-docs/ui/scalar`  | Scalar UI handler (vendored JS or CDN)               |
-| `ui/swagger` | `github.com/nopereta/go-api-docs/ui/swagger` | Swagger UI handler (vendored bundle or CDN)          |
-| `ui/redoc`   | `github.com/nopereta/go-api-docs/ui/redoc`   | Redoc handler (vendored JS or CDN)                   |
+| Package          | Import path                                      | What it does                                         |
+|------------------|--------------------------------------------------|------------------------------------------------------|
+| `openapi`        | `github.com/nopereta/go-api-docs/openapi`        | Typed router that auto-generates an OpenAPI 3.1 spec |
+| `ui/scalar`      | `github.com/nopereta/go-api-docs/ui/scalar`      | Scalar UI handler (vendored JS or CDN)               |
+| `ui/swagger`     | `github.com/nopereta/go-api-docs/ui/swagger`     | Swagger UI handler (vendored bundle or CDN)          |
+| `ui/redoc`       | `github.com/nopereta/go-api-docs/ui/redoc`       | Redoc handler (vendored JS or CDN)                   |
+| `ui/elements`    | `github.com/nopereta/go-api-docs/ui/elements`    | Stoplight Elements handler (vendored JS+CSS or CDN)  |
 
 ---
 
@@ -32,12 +33,12 @@ Three independent packages, zero mandatory dependencies beyond the stdlib:
 
 Every other Go OpenAPI solution has a fundamental problem:
 
-| Approach         | The catch                                                                                                                                                                                                                                                              |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **swaggo/swag**  | Comments diverge from code silently. `swag init` must be re-run. Zero compile-time guarantees.                                                                                                                                                                         |
-| **oapi-codegen** | You write YAML first. The generated code diverges between regenerations.                                                                                                                                                                                               |
-| **huma v2**      | "Zero deps" but pulls in a framework adapter package. Context-based handlers feel alien.                                                                                                                                                                               |
-| **Manual JSON**  | 100% accurate on day 1, 0% accurate on day 90. Every rename is a lie.                                                                                                                                                                                                  |
+| Approach         | The catch                                                                                                                                                                                                                                                                |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **swaggo/swag**  | Comments diverge from code silently. `swag init` must be re-run. Zero compile-time guarantees.                                                                                                                                                                           |
+| **oapi-codegen** | You write YAML first. The generated code diverges between regenerations.                                                                                                                                                                                                 |
+| **huma v2**      | "Zero deps" but pulls in a framework adapter package. Context-based handlers feel alien.                                                                                                                                                                                 |
+| **Manual JSON**  | 100% accurate on day 1, 0% accurate on day 90. Every rename is a lie.                                                                                                                                                                                                    |
 | **go-api-docs**  | Your Go types **are** the spec. Generics enforce handler signatures at compile time. `SchemaProvider` for zero-reflection schemas. `Validator` for compile-time-safe request validation. `goapi-gen` for an optional static spec snapshot in CI. No separate YAML. Ever. |
 
 ---
@@ -173,10 +174,10 @@ http.Handle("/", h)
 import "github.com/nopereta/go-api-docs/ui/swagger"
 
 h, _ := swagger.New(
-    swagger.WithSpecURL("/openapi.json"),
-    swagger.WithDarkMode(),
-    swagger.WithPersistAuthorization(),
-    swagger.WithTryItOutEnabled(),
+swagger.WithSpecURL("/openapi.json"),
+swagger.WithDarkMode(),
+swagger.WithPersistAuthorization(),
+swagger.WithTryItOutEnabled(),
 )
 http.Handle("/", h)
 ```
@@ -190,6 +191,19 @@ h, _ := redoc.New(
     redoc.WithSpecURL("/openapi.json"),
     redoc.WithRequiredPropsFirst(),
     redoc.WithExpandResponses("200,201"),
+)
+http.Handle("/", h)
+```
+
+### Serve Stoplight Elements
+
+```go
+import "github.com/nopereta/go-api-docs/ui/elements"
+
+h, _ := elements.New(
+    elements.WithSpecURL("/openapi.json"),
+    elements.WithLayout(elements.LayoutSidebar),
+    elements.WithRouter(elements.RouterHash),
 )
 http.Handle("/", h)
 ```
@@ -439,13 +453,13 @@ complement to Swagger UI.
 import "github.com/nopereta/go-api-docs/ui/redoc"
 
 h, err := redoc.New(
-    redoc.WithSpecURL("/openapi.json"),
-    redoc.WithBranding(redoc.Branding{Title: "Acme Corp", Subtitle: "Platform API"}),
-    redoc.WithEnvBadge("staging"),
-    redoc.WithRequiredPropsFirst(),
-    redoc.WithExpandResponses("200,201"),
-    redoc.WithHideDownloadButton(),
-    redoc.WithLazyRendering(),
+redoc.WithSpecURL("/openapi.json"),
+redoc.WithBranding(redoc.Branding{Title: "Acme Corp", Subtitle: "Platform API"}),
+redoc.WithEnvBadge("staging"),
+redoc.WithRequiredPropsFirst(),
+redoc.WithExpandResponses("200,201"),
+redoc.WithHideDownloadButton(),
+redoc.WithLazyRendering(),
 )
 // Serves:
 //   GET /          -> HTML page    (Cache-Control: no-cache)
@@ -458,6 +472,42 @@ Update the vendored bundle:
 ```bash
 make vendor-redoc                     # uses pinned version (2.2.0)
 make vendor-redoc VERSION=2.3.0
+```
+
+---
+
+## `elements` - Stoplight Elements handler
+
+[Stoplight Elements](https://github.com/stoplightio/elements) renders a three-panel
+interactive documentation UI. It combines clean documentation presentation with a
+built-in try-it panel, sitting between Redoc (docs-only) and Swagger UI (try-it-first).
+
+```go
+import "github.com/nopereta/go-api-docs/ui/elements"
+
+h, err := elements.New(
+    elements.WithSpecURL("/openapi.json"),
+    elements.WithLayout(elements.LayoutSidebar),
+    elements.WithRouter(elements.RouterHash),
+    elements.WithBranding(elements.Branding{Title: "Acme Corp", Subtitle: "Platform API"}),
+    elements.WithEnvBadge("staging"),
+    elements.WithHideInternal(),
+)
+// Serves:
+//   GET /              -> HTML page    (Cache-Control: no-cache)
+//   GET /elements.js   -> vendored JS  (Cache-Control: immutable)
+//   GET /elements.css  -> vendored CSS (Cache-Control: immutable)
+http.Handle("/", h)
+```
+
+Available layouts: `LayoutSidebar` (default), `LayoutStacked`, `LayoutResponsive`.
+Available routers: `RouterHash` (default), `RouterHistory`, `RouterMemory`.
+
+Update the vendored bundles:
+
+```bash
+make vendor-elements                       # uses pinned version (8.4.0)
+make vendor-elements VERSION=8.5.0
 ```
 
 ---
