@@ -1,0 +1,12 @@
+go 1.26.2
+
+use (
+	.
+	./example/openapi/chi
+	./example/openapi/echo
+	./example/openapi/fiber
+	./example/openapi/gin
+	./example/openapi/gorilla
+	./example/openapi/httprouter
+	./example/openapi/stdhttp
+)
