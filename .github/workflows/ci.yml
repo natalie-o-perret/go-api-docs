@@ -53,9 +53,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v19
+        uses: DavidAnson/markdownlint-cli2-action@v23
         with:
           globs: "**/*.md"
+          config: ".markdownlint.yaml"
 
   yaml-lint:
     name: YAML Lint
@@ -78,8 +79,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: commitlint
-        uses: wagoid/commitlint-action@v6
+      - uses: actions/setup-node@v4
         with:
-          configFile: .commitlintrc.yml
+          node-version: lts/*
+
+      - name: Install commitlint
+        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
+
+      - name: commitlint
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha || 'HEAD~1' }} --to HEAD --verbose
 
