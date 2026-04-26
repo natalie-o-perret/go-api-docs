@@ -1,19 +1,21 @@
 # go-api-docs
 
 [![CI](https://github.com/natalie-o-perret/go-api-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/natalie-o-perret/go-api-docs/actions/workflows/ci.yml)
+[![Lint](https://github.com/natalie-o-perret/go-api-docs/actions/workflows/lint-files.yml/badge.svg)](https://github.com/natalie-o-perret/go-api-docs/actions/workflows/lint-files.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/nopereta/go-api-docs.svg)](https://pkg.go.dev/github.com/nopereta/go-api-docs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nopereta/go-api-docs)](https://goreportcard.com/report/github.com/nopereta/go-api-docs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**The only Go library where the spec IS the code.**  
-No annotations. No code generation. No CLI tools. No drift.
+**Go library where your types define the OpenAPI 3.1 spec — at compile time, with zero drift.**  
+No annotations. No code generation. No mandatory tooling. Framework-agnostic.
 
 > [!NOTE]
-> Unapologetically vibe-coded with Claude Opus 4.5.
->
 > Every other Go OpenAPI solution forces you to maintain two sources of truth — your
 > Go types and your spec. Rename a field, forget to update the YAML, and your API
 > contract silently lies to every client. This library makes that impossible.
+>
+> `goapi-gen` is an optional CLI for teams that want a static spec snapshot in CI —
+> but you never need it to get a fully accurate, live OpenAPI spec.
 
 Three independent packages, zero mandatory dependencies beyond the stdlib:
 
@@ -35,7 +37,7 @@ Every other Go OpenAPI solution has a fundamental problem:
 | **oapi-codegen** | You write YAML first. The generated code diverges between regenerations.                                                                                                                                                                                               |
 | **huma v2**      | "Zero deps" but pulls in a framework adapter package. Context-based handlers feel alien.                                                                                                                                                                               |
 | **Manual JSON**  | 100% accurate on day 1, 0% accurate on day 90. Every rename is a lie.                                                                                                                                                                                                  |
-| **go-api-docs**  | Your Go types **are** the spec. Generics enforce handler signatures at compile time. Implement `SchemaProvider` for zero-reflection schemas. `Validator` for compile-time-safe request validation. `goapi-gen` for a fully static spec with no runtime at all. Always. |
+| **go-api-docs**  | Your Go types **are** the spec. Generics enforce handler signatures at compile time. `SchemaProvider` for zero-reflection schemas. `Validator` for compile-time-safe request validation. `goapi-gen` for an optional static spec snapshot in CI. No separate YAML. Ever. |
 
 ---
 
