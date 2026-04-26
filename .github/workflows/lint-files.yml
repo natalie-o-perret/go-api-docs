@@ -1,0 +1,77 @@
+name: lint - files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.go"
+      - "go.sum"
+      - "go.work.sum"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - ".yamllint.yml"
+      - "**/*.md"
+      - ".markdownlint.jsonc"
+      - "**/*.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.go"
+      - "go.sum"
+      - "go.work.sum"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - ".yamllint.yml"
+      - "**/*.md"
+      - ".markdownlint.jsonc"
+      - "**/*.json"
+
+jobs:
+  lint-go:
+    name: "*.go, *.sum"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+
+  lint-yaml:
+    name: "*.yml, *.yaml"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install yamllint
+        run: pip install yamllint
+
+      - name: run yamllint
+        run: yamllint -c .yamllint.yml .
+
+  lint-markdown:
+    name: "*.md, *.rst"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
+
+  lint-json:
+    name: json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: validate json files
+        run: |
+          find . -name '*.json' -not -path '*/.git/*' | sort | while read -r f; do
+            jq empty "$f" || { echo "Invalid JSON: $f"; exit 1; }
+          done

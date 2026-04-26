@@ -27,17 +27,4 @@ jobs:
       - name: test
         run: go test -race -count=1 $(go list ./... | grep -v '/example/')
 
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - uses: golangci/golangci-lint-action@v7
-        with:
-          version: latest
