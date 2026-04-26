@@ -20,6 +20,9 @@
   "MD031": false,
 
   // Fenced code blocks: don't require a language tag
-  "MD040": false
+  "MD040": false,
+
+  // Table column alignment — unenforceable when cells contain long prose/URLs
+  "MD060": false
 }
 
