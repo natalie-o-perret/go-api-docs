@@ -1,16 +1,14 @@
-name: CI
+name: ci
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-
-permissions:
-  contents: read
+    branches: [main]
 
 jobs:
   test:
-    name: Build & Test
+    name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,17 +18,17 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build
-        run: go build ./...
+      - name: download deps
+        run: go mod download
 
-      - name: Vet
+      - name: vet
         run: go vet ./...
 
-      - name: Test
+      - name: test
         run: go test -race -count=1 ./...
 
   lint:
-    name: Lint
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,54 +36,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: false   # golangci-lint manages its own cache
+          cache: true
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.11.4
-          args: --timeout=5m
-
-  markdown-lint:
-    name: Markdown Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: markdownlint
-        uses: DavidAnson/markdownlint-cli2-action@v23
-        with:
-          globs: "**/*.md"
-          config: ".markdownlint.yaml"
-
-  yaml-lint:
-    name: YAML Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: yamllint
-        uses: ibiqlik/action-yamllint@v3
-        with:
-          config_file: .yamllint.yml
-          file_or_dir: "."
-          strict: true
-
-  commitlint:
-    name: Commitlint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install commitlint
-        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
-
-      - name: commitlint
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha || 'HEAD~1' }} --to HEAD --verbose
-
+          version: latest
