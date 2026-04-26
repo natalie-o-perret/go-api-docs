@@ -8,8 +8,8 @@
 //	make gen-swagger-swag
 //	# or directly:
 //	swag init --generalInfo main.go \
-//	          --dir       example/swagger/swag \
-//	          --output    example/swagger/swag/docs
+//	          --dir       examples/ui/swagger/swag \
+//	          --output    examples/ui/swagger/swag/docs
 //
 // Run from this directory:
 //
@@ -27,7 +27,7 @@ import (
 	"github.com/nopereta/go-api-docs/ui/swagger"
 	// Blank import runs the init() in docs/docs.go which registers the
 	// generated spec with swag's global registry.
-	_ "github.com/nopereta/go-api-docs/example/swagger/swag/docs"
+	_ "github.com/nopereta/go-api-docs/examples/ui/swagger/swag/docs"
 	swag "github.com/swaggo/swag"
 )
 
