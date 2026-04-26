@@ -9,7 +9,7 @@ linters:
     - govet
   exclusions:
     rules:
-      - path: "^example/"
+      - path: "^examples/"
         text: "."
 issues:
   max-issues-per-linter: 0
