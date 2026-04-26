@@ -1,4 +1,6 @@
-name: yaml-lint
+a tout le monde, désolé pour les gens loin et les gens qui ne se présentent pas. Certains on déjà pu me rencontrer et une vidéo a été tournée...
+
+Mais toujours iname: yaml-lint
 
 on:
   push:
@@ -20,4 +22,3 @@ jobs:
 
       - name: run yamllint
         run: yamllint -c .yamllint.yml .
-

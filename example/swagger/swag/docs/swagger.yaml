@@ -46,7 +46,7 @@ definitions:
     type: object
 host: localhost:9082
 info:
-  contact: { }
+  contact: {}
   description: A simple task-management service — swagger/swag example.
   title: Tasks API
   version: 2.0.0
@@ -74,7 +74,7 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       summary: List tasks
       tags:
         - tasks
@@ -104,7 +104,7 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       summary: Create a task
       tags:
         - tasks
@@ -124,7 +124,7 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       summary: Delete a task
       tags:
         - tasks
@@ -145,7 +145,7 @@ paths:
           schema:
             $ref: '#/definitions/main.ErrorResponse'
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       summary: Get a task
       tags:
         - tasks
