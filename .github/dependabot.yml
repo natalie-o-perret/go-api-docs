@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/chi
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/echo
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/fiber
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/gin
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/gorilla
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/httprouter
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /example/openapi/stdhttp
+    schedule:
+      interval: weekly
