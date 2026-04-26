@@ -41,4 +41,3 @@ jobs:
       - uses: golangci/golangci-lint-action@v7
         with:
           version: latest
-          args: --exclude-dirs=example
