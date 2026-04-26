@@ -1,0 +1,13 @@
+extends: default
+rules:
+  # Long lines are common in GitHub Actions YAML (uses: …@vN, args: …).
+  # Raise the limit and demote to warning so the build is not blocked.
+  line-length:
+    max: 150
+    level: warning
+  # Not every YAML file in this repo starts with "---".
+  document-start: disable
+  # Allow bare true/false booleans (used by golangci-lint and GitHub Actions).
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false

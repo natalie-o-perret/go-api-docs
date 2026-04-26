@@ -1,0 +1,16 @@
+version: "2"
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - staticcheck
+    - unused
+    - ineffassign
+    - govet
+  exclusions:
+    rules:
+      - path: "^example/"
+        text: "."
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

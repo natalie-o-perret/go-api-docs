@@ -1,0 +1,9 @@
+# compiled example binaries — never commit these
+chi/chi
+echo/echo
+fiber/fiber
+gin/gin
+gorilla/gorilla
+httprouter/httprouter
+stdhttp/stdhttp
+goapi-gen/goapi-gen
