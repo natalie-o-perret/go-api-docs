@@ -24,6 +24,7 @@ Three independent packages, zero mandatory dependencies beyond the stdlib:
 | `openapi`    | `github.com/nopereta/go-api-docs/openapi`    | Typed router that auto-generates an OpenAPI 3.1 spec |
 | `ui/scalar`  | `github.com/nopereta/go-api-docs/ui/scalar`  | Scalar UI handler (vendored JS or CDN)               |
 | `ui/swagger` | `github.com/nopereta/go-api-docs/ui/swagger` | Swagger UI handler (vendored bundle or CDN)          |
+| `ui/redoc`   | `github.com/nopereta/go-api-docs/ui/redoc`   | Redoc handler (vendored JS or CDN)                   |
 
 ---
 
@@ -172,10 +173,23 @@ http.Handle("/", h)
 import "github.com/nopereta/go-api-docs/ui/swagger"
 
 h, _ := swagger.New(
-swagger.WithSpecURL("/openapi.json"),
-swagger.WithDarkMode(),
-swagger.WithPersistAuthorization(),
-swagger.WithTryItOutEnabled(),
+    swagger.WithSpecURL("/openapi.json"),
+    swagger.WithDarkMode(),
+    swagger.WithPersistAuthorization(),
+    swagger.WithTryItOutEnabled(),
+)
+http.Handle("/", h)
+```
+
+### Serve Redoc
+
+```go
+import "github.com/nopereta/go-api-docs/ui/redoc"
+
+h, _ := redoc.New(
+    redoc.WithSpecURL("/openapi.json"),
+    redoc.WithRequiredPropsFirst(),
+    redoc.WithExpandResponses("200,201"),
 )
 http.Handle("/", h)
 ```
@@ -411,6 +425,39 @@ Update the vendored bundles:
 ```bash
 make vendor-swagger-ui                       # uses pinned version (5.18.2)
 make vendor-swagger-ui VERSION=5.19.0
+```
+
+---
+
+## `redoc` - Redoc handler
+
+[Redoc](https://github.com/Redocly/redoc) renders a clean, three-panel documentation
+page. It is documentation-focused rather than try-it-out-focused, making it a good
+complement to Swagger UI.
+
+```go
+import "github.com/nopereta/go-api-docs/ui/redoc"
+
+h, err := redoc.New(
+    redoc.WithSpecURL("/openapi.json"),
+    redoc.WithBranding(redoc.Branding{Title: "Acme Corp", Subtitle: "Platform API"}),
+    redoc.WithEnvBadge("staging"),
+    redoc.WithRequiredPropsFirst(),
+    redoc.WithExpandResponses("200,201"),
+    redoc.WithHideDownloadButton(),
+    redoc.WithLazyRendering(),
+)
+// Serves:
+//   GET /          -> HTML page    (Cache-Control: no-cache)
+//   GET /redoc.js  -> vendored JS  (Cache-Control: immutable)
+http.Handle("/", h)
+```
+
+Update the vendored bundle:
+
+```bash
+make vendor-redoc                     # uses pinned version (2.2.0)
+make vendor-redoc VERSION=2.3.0
 ```
 
 ---

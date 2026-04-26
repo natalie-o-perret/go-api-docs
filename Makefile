@@ -1,7 +1,8 @@
 SCALAR_VERSION  ?= 1.52.6
 SWAGGER_VERSION ?= 5.18.2
+REDOC_VERSION   ?= 2.2.0
 
-.PHONY: vendor-js vendor-swagger-ui gen-swagger-swag install-goapi-gen test lint
+.PHONY: vendor-js vendor-swagger-ui vendor-redoc gen-swagger-swag install-goapi-gen test lint
 
 ## install-goapi-gen: install the static spec generator into $GOPATH/bin.
 ##   go generate ./...   will then produce openapi.json with zero runtime.
@@ -13,22 +14,29 @@ install-goapi-gen:
 ##   make vendor-js VERSION=1.53.0
 vendor-js:
 	curl -sL "https://cdn.jsdelivr.net/npm/@scalar/api-reference@$(SCALAR_VERSION)/dist/browser/standalone.js" \
-	  -o assets/scalar.min.js
-	@echo "vendored scalar v$(SCALAR_VERSION) → $$(wc -c < assets/scalar.min.js) bytes"
+	  -o ui/scalar/assets/scalar.min.js
+	@echo "vendored scalar v$(SCALAR_VERSION) → $$(wc -c < ui/scalar/assets/scalar.min.js) bytes"
 
 ## vendor-swagger-ui: download a specific swagger-ui-dist release.
 ##   make vendor-swagger-ui VERSION=5.19.0
 vendor-swagger-ui:
 	curl -sL "https://cdn.jsdelivr.net/npm/swagger-ui-dist@$(SWAGGER_VERSION)/swagger-ui-bundle.js" \
-	  -o swagger/assets/swagger-ui-bundle.min.js
+	  -o ui/swagger/assets/swagger-ui-bundle.min.js
 	curl -sL "https://cdn.jsdelivr.net/npm/swagger-ui-dist@$(SWAGGER_VERSION)/swagger-ui-standalone-preset.js" \
-	  -o swagger/assets/swagger-ui-standalone-preset.min.js
+	  -o ui/swagger/assets/swagger-ui-standalone-preset.min.js
 	curl -sL "https://cdn.jsdelivr.net/npm/swagger-ui-dist@$(SWAGGER_VERSION)/swagger-ui.css" \
-	  -o swagger/assets/swagger-ui.min.css
+	  -o ui/swagger/assets/swagger-ui.min.css
 	@echo "vendored swagger-ui v$(SWAGGER_VERSION)"
-	@echo "  bundle.js → $$(wc -c < swagger/assets/swagger-ui-bundle.min.js) bytes"
-	@echo "  preset.js → $$(wc -c < swagger/assets/swagger-ui-standalone-preset.min.js) bytes"
-	@echo "  ui.css    → $$(wc -c < swagger/assets/swagger-ui.min.css) bytes"
+	@echo "  bundle.js → $$(wc -c < ui/swagger/assets/swagger-ui-bundle.min.js) bytes"
+	@echo "  preset.js → $$(wc -c < ui/swagger/assets/swagger-ui-standalone-preset.min.js) bytes"
+	@echo "  ui.css    → $$(wc -c < ui/swagger/assets/swagger-ui.min.css) bytes"
+
+## vendor-redoc: download a specific Redoc standalone bundle.
+##   make vendor-redoc VERSION=2.3.0
+vendor-redoc:
+	curl -sL "https://cdn.jsdelivr.net/npm/redoc@$(REDOC_VERSION)/bundles/redoc.standalone.js" \
+	  -o ui/redoc/assets/redoc.standalone.min.js
+	@echo "vendored redoc v$(REDOC_VERSION) → $$(wc -c < ui/redoc/assets/redoc.standalone.min.js) bytes"
 
 ## gen-swagger-swag: regenerate the OpenAPI spec for example/swagger/swag from annotations.
 gen-swagger-swag:
