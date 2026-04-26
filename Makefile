@@ -30,13 +30,13 @@ vendor-swagger-ui:
 	@echo "  preset.js → $$(wc -c < swagger/assets/swagger-ui-standalone-preset.min.js) bytes"
 	@echo "  ui.css    → $$(wc -c < swagger/assets/swagger-ui.min.css) bytes"
 
-## gen-swagger-swag: regenerate the OpenAPI spec for example/swagger/swag from annotations.
+## gen-swagger-swag: regenerate the OpenAPI spec for examples/ui/swagger/swag from annotations.
 gen-swagger-swag:
 	swag init \
 	  --generalInfo main.go \
-	  --dir         example/swagger/swag \
-	  --output      example/swagger/swag/docs
-	@echo "spec written to example/swagger/swag/docs/"
+	  --dir         examples/ui/swagger/swag \
+	  --output      examples/ui/swagger/swag/docs
+	@echo "spec written to examples/ui/swagger/swag/docs/"
 
 ## test: run all tests
 test:
