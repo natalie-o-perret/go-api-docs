@@ -224,7 +224,7 @@ return ps.ByName(name)
 router.GET("/tasks/:id", adapt(api))
 ```
 
-See `example/openapi/httprouter/` for the full runnable example.
+See `examples/openapi/httprouter/` for the full runnable example.
 
 ### How path params work without any config (the mount-at-root pattern)
 
@@ -243,21 +243,21 @@ your typed handler                ← decodeInput calls r.PathValue("id") ✓
 #### `go-api-docs/openapi` — framework integrations
 
 ```
-example/openapi/chi/        — chi + chi middleware
-example/openapi/gorilla/    — gorilla/mux
-example/openapi/gin/        — gin (gin.WrapH)
-example/openapi/echo/       — echo (echo.WrapHandler)
-example/openapi/fiber/      — fiber (gofiber/adaptor)
-example/openapi/httprouter/ — httprouter (WithPathValueFn + context)
+examples/openapi/chi/        — chi + chi middleware
+examples/openapi/gorilla/    — gorilla/mux
+examples/openapi/gin/        — gin (gin.WrapH)
+examples/openapi/echo/       — echo (echo.WrapHandler)
+examples/openapi/fiber/      — fiber (gofiber/adaptor)
+examples/openapi/httprouter/ — httprouter (WithPathValueFn + context)
 ```
 
 ```bash
-cd example/openapi/chi        && go run .  # :9091
-cd example/openapi/gorilla    && go run .  # :9092
-cd example/openapi/gin        && go run .  # :9093
-cd example/openapi/echo       && go run .  # :9094
-cd example/openapi/fiber      && go run .  # :9095
-cd example/openapi/httprouter && go run .  # :9096
+cd examples/openapi/chi        && go run .  # :9091
+cd examples/openapi/gorilla    && go run .  # :9092
+cd examples/openapi/gin        && go run .  # :9093
+cd examples/openapi/echo       && go run .  # :9094
+cd examples/openapi/fiber      && go run .  # :9095
+cd examples/openapi/httprouter && go run .  # :9096
 ```
 
 #### `go-api-docs/scalar` — Scalar UI serving

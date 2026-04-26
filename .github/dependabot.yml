@@ -9,30 +9,30 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/chi
+    directory: /examples/openapi/chi
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/echo
+    directory: /examples/openapi/echo
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/fiber
+    directory: /examples/openapi/fiber
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/gin
+    directory: /examples/openapi/gin
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/gorilla
+    directory: /examples/openapi/gorilla
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/httprouter
+    directory: /examples/openapi/httprouter
     schedule:
       interval: weekly
   - package-ecosystem: gomod
-    directory: /example/openapi/stdhttp
+    directory: /examples/openapi/stdhttp
     schedule:
       interval: weekly

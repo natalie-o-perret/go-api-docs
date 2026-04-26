@@ -22,7 +22,7 @@ jobs:
         run: go mod download
 
       - name: vet
-        run: go vet $(go list ./... | grep -v '/example/')
+        run: go vet $(go list ./... | grep -v '/example')
 
       - name: test
-        run: go test -race -count=1 $(go list ./... | grep -v '/example/')
+        run: go test -race -count=1 $(go list ./... | grep -v '/example')
