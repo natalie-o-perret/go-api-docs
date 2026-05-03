@@ -6,6 +6,8 @@ jobs:
   conventional-commit:
     name: conventional commit check
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - uses: amannn/action-semantic-pull-request@v6
         env:
@@ -28,4 +30,3 @@ jobs:
           subjectPatternError: |
             The subject "{subject}" found in the pull request title "{title}"
             should start with a lowercase letter.
-

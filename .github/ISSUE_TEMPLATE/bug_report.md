@@ -17,4 +17,3 @@ labels: bug
 - go-api-docs version:
 - Go version:
 - OS:
-

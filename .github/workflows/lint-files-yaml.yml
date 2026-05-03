@@ -18,4 +18,3 @@ jobs:
           config_file: .yamllint.yml
           file_or_dir: .
           strict: true
-

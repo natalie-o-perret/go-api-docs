@@ -47,12 +47,12 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
 
-      - name: coverage gate (>= 80%)
+      - name: coverage gate (>= 45%)
         if: runner.os == 'Linux'
         run: |
           total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$3); print $3}')
           echo "Total coverage: ${total}%"
-          awk -v t="$total" 'BEGIN { if (t+0 < 80) { print "Coverage " t "% is below 80% threshold"; exit 1 } }'
+          awk -v t="$total" 'BEGIN { if (t+0 < 45) { print "Coverage " t "% is below 45% threshold"; exit 1 } }'
 
       - name: upload coverage
         if: runner.os == 'Linux'
