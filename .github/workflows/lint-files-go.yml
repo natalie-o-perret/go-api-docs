@@ -19,7 +19,8 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          args: $(go list ./... | grep -v '/example')
+        env:
+          GOWORK: "off"
   go-mod-verify:
     name: go mod verify
     runs-on: ubuntu-latest
