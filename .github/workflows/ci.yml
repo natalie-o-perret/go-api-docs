@@ -1,4 +1,4 @@
-name: ci
+name: ci - build + tests
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: test
-        run: go test -race -count=1 $(go list ./... | grep -v '/example')
+        run: go test -race -count=1 -coverprofile=coverage.out $(go list ./... | grep -v '/example')
         if: runner.os != 'Windows'
 
       - name: test (windows)
@@ -47,8 +47,22 @@ jobs:
         shell: pwsh
         if: runner.os == 'Windows'
 
-  deadcode:
-    name: deadcode
+      - name: coverage gate (>= 80%)
+        if: runner.os == 'Linux'
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$3); print $3}')
+          echo "Total coverage: ${total}%"
+          awk -v t="$total" 'BEGIN { if (t+0 < 80) { print "Coverage " t "% is below 80% threshold"; exit 1 } }'
+
+      - name: upload coverage
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.out
+
+  govulncheck:
+    name: govulncheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -58,26 +72,8 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: install deadcode
-        run: go install golang.org/x/tools/cmd/deadcode@latest
+      - name: install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
-      - name: check dead code
-        run: deadcode $(go list ./... | grep -v '/example')
-
-  staticcheck:
-    name: staticcheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: check warnings
-        run: staticcheck $(go list ./... | grep -v '/example')
-
+      - name: run govulncheck
+        run: govulncheck $(go list ./... | grep -v '/example')

@@ -1,16 +1,52 @@
 version: "2"
-linters:
-  default: standard
+
+formatters:
   enable:
-    - errcheck
+    - gofmt
+
+linters:
+  enable:
+    - govet
     - staticcheck
     - unused
+    - deadcode
+    - errcheck
     - ineffassign
-    - govet
+    - misspell
+    - unconvert
+    - unparam
+    - gocritic
+    - revive
+    - nilerr
+    - wastedassign
+  settings:
+    govet:
+      enable-all: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+      disabled-checks:
+        - hugeParam        # false-positive on generic type params
+        - rangeValCopy     # false-positive on generic type params
+        - unnamedResult    # naming return values is optional in Go
+        - dupSubExpr       # flags intentional duplicate args in tests
+        - dupOption        # flags intentional duplicate args in tests
+    revive:
+      rules:
+        - name: exported
+          arguments: [ "checkPrivateReceivers" ]
+        - name: unused-parameter
+        - name: empty-block
+        - name: superfluous-else
+        - name: unreachable-code
+        - name: redefines-builtin-id
   exclusions:
     rules:
       - path: "^examples/"
         text: "."
+
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
