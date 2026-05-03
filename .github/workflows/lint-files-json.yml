@@ -7,14 +7,5 @@ on:
     branches: [ main ]
     paths: [ "**/*.json", "**/*.jsonc" ]
 jobs:
-  json-lint:
-    name: json lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: validate json files
-        run: |
-          find . -name '*.json' -not -path './.git/*' | while read f; do
-            echo "Checking $f ..."
-            python3 -m json.tool "$f" > /dev/null
-          done
+  lint-json:
+    uses: natalie-o-perret/.github/.github/workflows/reusable-lint-files-json.yml@main
