@@ -8,8 +8,12 @@ on:
 
 jobs:
   test:
-    name: test
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v6
 
@@ -23,6 +27,22 @@ jobs:
 
       - name: vet
         run: go vet $(go list ./... | grep -v '/example')
+        if: runner.os != 'Windows'
+
+      - name: vet (windows)
+        run: |
+          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
+          go vet $packages
+        shell: pwsh
+        if: runner.os == 'Windows'
 
       - name: test
         run: go test -race -count=1 $(go list ./... | grep -v '/example')
+        if: runner.os != 'Windows'
+
+      - name: test (windows)
+        run: |
+          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
+          go test -race -count=1 $packages
+        shell: pwsh
+        if: runner.os == 'Windows'
