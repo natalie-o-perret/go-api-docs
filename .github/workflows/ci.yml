@@ -46,3 +46,38 @@ jobs:
           go test -race -count=1 $packages
         shell: pwsh
         if: runner.os == 'Windows'
+
+  deadcode:
+    name: deadcode
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: install deadcode
+        run: go install golang.org/x/tools/cmd/deadcode@latest
+
+      - name: check dead code
+        run: deadcode $(go list ./... | grep -v '/example')
+
+  staticcheck:
+    name: staticcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: check warnings
+        run: staticcheck $(go list ./... | grep -v '/example')
+
