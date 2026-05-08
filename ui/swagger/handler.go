@@ -69,16 +69,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // config holds the resolved configuration for a Handler.
 type config struct {
+	branding   *Branding
+	uiConfig   map[string]any
+	tmpl       *template.Template
 	specURL    string
 	pageTitle  string
 	envBadge   string
-	branding   *Branding
 	jsPath     string
 	presetPath string
 	cssPath    string
 	darkMode   bool
-	uiConfig   map[string]any // forwarded verbatim to SwaggerUIBundle(...)
-	tmpl       *template.Template
 }
 
 func defaultConfig() *config {
@@ -94,17 +94,17 @@ func defaultConfig() *config {
 
 // PageData is passed to the HTML template.
 type PageData struct {
+	Branding    *Branding
 	PageTitle   string
 	FaviconURL  string
 	FaviconType string
 	FaviconLink template.HTML
-	DarkMode    bool
-	Branding    *Branding
 	EnvBadge    string
 	JSPath      string
 	PresetPath  string
 	CSSPath     string
-	UIConfig    template.JS // JSON-encoded SwaggerUIBundle config object
+	UIConfig    template.JS
+	DarkMode    bool
 }
 
 func renderPage(cfg *config) ([]byte, error) {
@@ -159,7 +159,7 @@ func renderPage(cfg *config) ([]byte, error) {
 	}
 	if data.FaviconURL != "" {
 		data.FaviconLink = template.HTML(fmt.Sprintf(
-			`<link rel="icon" type="%s" href="%s"/>`,
+			`<link rel="icon" type=%q href=%q/>`,
 			template.HTMLEscapeString(data.FaviconType),
 			template.HTMLEscapeString(data.FaviconURL),
 		))

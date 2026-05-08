@@ -15,10 +15,10 @@ import (
 // ── domain types used across tests ───────────────────────────────────────────
 
 type Task struct {
+	CreatedAt time.Time `json:"createdAt,omitempty"`
 	ID        string    `json:"id"                  example:"task_1"              readOnly:"true"`
 	Title     string    `json:"title"               example:"Design onboarding"`
 	Status    string    `json:"status"              example:"open"                enum:"open,in_progress,done"`
-	CreatedAt time.Time `json:"createdAt,omitempty"`
 }
 
 type TaskInput struct {
@@ -60,7 +60,7 @@ func specFrom(r *openapi.Router) map[string]any {
 func TestRouter_serveOpenAPIJSON(t *testing.T) {
 	r := newRouter()
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi.json", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi.json", http.NoBody))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -80,14 +80,14 @@ func TestRouter_serveOpenAPIJSON(t *testing.T) {
 
 func TestGET_noParams(t *testing.T) {
 	r := newRouter()
-	openapi.GET[[]Task](r, "/tasks", func(req *http.Request) (*[]Task, error) {
+	openapi.GET[[]Task](r, "/tasks", func(_ *http.Request) (*[]Task, error) {
 		tasks := []Task{{ID: "1", Title: "t1", Status: "open"}}
 		return &tasks, nil
 	}, openapi.Summary("List tasks"), openapi.Tags("tasks"))
 
 	// ── handler works ─────────────────────────────────────────────────────────
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks", http.NoBody))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
@@ -102,7 +102,7 @@ func TestGET_noParams(t *testing.T) {
 
 func TestPOST_bodyDecoding(t *testing.T) {
 	r := newRouter()
-	openapi.POST[TaskInput, Task](r, "/tasks", func(req *http.Request, in *TaskInput) (*Task, error) {
+	openapi.POST[TaskInput, Task](r, "/tasks", func(_ *http.Request, in *TaskInput) (*Task, error) {
 		return &Task{ID: "new", Title: in.Title, Status: "open"}, nil
 	}, openapi.Summary("Create task"))
 
@@ -128,14 +128,14 @@ func TestPOST_bodyDecoding(t *testing.T) {
 func TestHandle_pathParam(t *testing.T) {
 	r := newRouter()
 	openapi.Handle[GetTaskInput, Task](r, http.MethodGet, "/tasks/{id}",
-		func(req *http.Request, in *GetTaskInput) (*Task, error) {
+		func(_ *http.Request, in *GetTaskInput) (*Task, error) {
 			return &Task{ID: in.ID, Title: "found", Status: "open"}, nil
 		},
 		openapi.Summary("Get task"),
 	)
 
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks/task_42", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks/task_42", http.NoBody))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -150,14 +150,14 @@ func TestHandle_pathParam(t *testing.T) {
 func TestHandle_queryParam(t *testing.T) {
 	r := newRouter()
 	openapi.Handle[ListTasksInput, []Task](r, http.MethodGet, "/tasks",
-		func(req *http.Request, in *ListTasksInput) (*[]Task, error) {
+		func(_ *http.Request, in *ListTasksInput) (*[]Task, error) {
 			tasks := []Task{{ID: "1", Status: in.Status}}
 			return &tasks, nil
 		},
 	)
 
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks?status=done", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/tasks?status=done", http.NoBody))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -172,7 +172,7 @@ func TestHandle_queryParam(t *testing.T) {
 func TestDELETE_returns204(t *testing.T) {
 	r := newRouter()
 	openapi.DELETE[GetTaskInput](r, "/tasks/{id}",
-		func(req *http.Request, in *GetTaskInput) error {
+		func(_ *http.Request, in *GetTaskInput) error {
 			if in.ID == "missing" {
 				return openapi.ErrNotFound("task not found")
 			}
@@ -181,7 +181,7 @@ func TestDELETE_returns204(t *testing.T) {
 	)
 
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/tasks/task_1", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/tasks/task_1", http.NoBody))
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", rec.Code)
 	}
@@ -190,13 +190,13 @@ func TestDELETE_returns204(t *testing.T) {
 func TestDELETE_errNotFound(t *testing.T) {
 	r := newRouter()
 	openapi.DELETE[GetTaskInput](r, "/tasks/{id}",
-		func(req *http.Request, in *GetTaskInput) error {
+		func(_ *http.Request, _ *GetTaskInput) error {
 			return openapi.ErrNotFound("task not found")
 		},
 	)
 
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/tasks/missing", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, "/tasks/missing", http.NoBody))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", rec.Code)
 	}
@@ -204,7 +204,7 @@ func TestDELETE_errNotFound(t *testing.T) {
 
 func TestSpec_containsPathParam(t *testing.T) {
 	r := newRouter()
-	openapi.Handle[GetTaskInput, Task](r, http.MethodGet, "/tasks/{id}", func(req *http.Request, in *GetTaskInput) (*Task, error) {
+	openapi.Handle[GetTaskInput, Task](r, http.MethodGet, "/tasks/{id}", func(_ *http.Request, _ *GetTaskInput) (*Task, error) {
 		return nil, nil
 	}, openapi.Summary("Get task"), openapi.Tags("tasks"), openapi.Security("BearerAuth"))
 
@@ -219,7 +219,7 @@ func TestSpec_containsPathParam(t *testing.T) {
 
 func TestSpec_containsRequestBody(t *testing.T) {
 	r := newRouter()
-	openapi.POST[TaskInput, Task](r, "/tasks", func(req *http.Request, in *TaskInput) (*Task, error) {
+	openapi.POST[TaskInput, Task](r, "/tasks", func(_ *http.Request, _ *TaskInput) (*Task, error) {
 		return nil, nil
 	})
 
@@ -231,7 +231,7 @@ func TestSpec_containsRequestBody(t *testing.T) {
 
 func TestSpec_schemaRegisteredInComponents(t *testing.T) {
 	r := newRouter()
-	openapi.GET[Task](r, "/tasks/{id}", func(req *http.Request) (*Task, error) {
+	openapi.GET[Task](r, "/tasks/{id}", func(_ *http.Request) (*Task, error) {
 		return nil, nil
 	})
 
@@ -246,7 +246,7 @@ func TestSpec_schemaRegisteredInComponents(t *testing.T) {
 func TestSpec_mixedParamAndBody(t *testing.T) {
 	r := newRouter()
 	openapi.POST[CreateTaskInput, Task](r, "/projects/{projectId}/tasks",
-		func(req *http.Request, in *CreateTaskInput) (*Task, error) {
+		func(_ *http.Request, in *CreateTaskInput) (*Task, error) {
 			return &Task{ID: "new", Title: in.Title, Status: "open"}, nil
 		},
 		openapi.Summary("Create task in project"),
@@ -275,8 +275,8 @@ func TestSpec_mixedParamAndBody(t *testing.T) {
 // ── additional coverage ───────────────────────────────────────────────────────
 
 type UpdateInput struct {
-	ID    string  `path:"id"`
 	Title *string `json:"title,omitempty"`
+	ID    string  `path:"id"`
 }
 
 func TestPUT_replaces(t *testing.T) {
@@ -323,7 +323,7 @@ func TestGETWithInput_queryFiltered(t *testing.T) {
 		return &out, nil
 	})
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/items?status=open", nil))
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/items?status=open", http.NoBody))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
@@ -374,8 +374,8 @@ func TestSpec_routeOptions(t *testing.T) {
 func TestSpec_withPathValueFn(t *testing.T) {
 	r := openapi.New(
 		openapi.Info{Title: "Custom", Version: "1.0.0"},
-		openapi.WithPathValueFn(func(req *http.Request, name string) string {
-			return req.Header.Get("X-Path-" + name)
+		openapi.WithPathValueFn(func(r *http.Request, name string) string {
+			return r.Header.Get("X-Path-" + name)
 		}),
 	)
 	openapi.GETWithInput[GetTaskInput, Task](r, "/tasks/{id}", func(_ *http.Request, in *GetTaskInput) (*Task, error) {
@@ -383,7 +383,7 @@ func TestSpec_withPathValueFn(t *testing.T) {
 	})
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/tasks/anything", nil)
+	req := httptest.NewRequest(http.MethodGet, "/tasks/anything", http.NoBody)
 	req.Header.Set("X-Path-id", "injected_id")
 	r.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -417,7 +417,7 @@ func TestErrors_helpers(t *testing.T) {
 		{"/custom", http.StatusTeapot},
 	} {
 		rec := httptest.NewRecorder()
-		r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tc.path, nil))
+		r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tc.path, http.NoBody))
 		if rec.Code != tc.code {
 			t.Errorf("%s: expected %d, got %d", tc.path, tc.code, rec.Code)
 		}
@@ -498,4 +498,3 @@ func TestSchemaProvider_bypassesReflection(t *testing.T) {
 		t.Error("SchemaProvider types must be inlined, not registered as $ref in components/schemas")
 	}
 }
-

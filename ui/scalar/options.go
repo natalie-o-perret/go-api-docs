@@ -34,6 +34,7 @@ func WithSources(sources ...Source) Option {
 // Theme is one of Scalar's built-in theme names.
 type Theme string
 
+// Theme values.
 const (
 	ThemeDefault    Theme = "default"
 	ThemeAlternate  Theme = "alternate"
@@ -56,6 +57,7 @@ func WithTheme(t Theme) Option {
 // Layout is one of Scalar's layout names.
 type Layout string
 
+// Layout values.
 const (
 	LayoutModern  Layout = "modern"
 	LayoutClassic Layout = "classic"
@@ -95,6 +97,7 @@ type Visibility = ShowToolbar
 // ShowToolbar controls when the developer toolbar is visible.
 type ShowToolbar string
 
+// ShowToolbar values.
 const (
 	ShowToolbarAlways    ShowToolbar = "always"
 	ShowToolbarLocalhost ShowToolbar = "localhost"
@@ -162,6 +165,7 @@ func WithShowOperationID() Option {
 // Combine multiple flags with | or pass them as separate arguments to [With].
 type Flag uint
 
+// Flag values for use with [With].
 const (
 	DisableAgent       Flag = 1 << iota // agent.disabled = true
 	DisableMCP                          // mcp.disabled = true

@@ -27,15 +27,14 @@ linters:
         - style
         - performance
       disabled-checks:
-        - hugeParam        # false-positive on generic type params
-        - rangeValCopy     # false-positive on generic type params
-        - unnamedResult    # naming return values is optional in Go
-        - dupSubExpr       # flags intentional duplicate args in tests
-        - dupOption        # flags intentional duplicate args in tests
+        - hugeParam # false-positive on generic type params
+        - rangeValCopy # false-positive on generic type params
+        - unnamedResult # naming return values is optional in Go
+        - dupSubExpr # flags intentional duplicate args in tests
     revive:
       rules:
         - name: exported
-          arguments: [ "checkPrivateReceivers" ]
+          arguments: ["checkPrivateReceivers"]
         - name: unused-parameter
         - name: empty-block
         - name: superfluous-else

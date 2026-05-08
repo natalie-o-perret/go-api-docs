@@ -42,7 +42,7 @@ func TestHandler_htmlCacheHeader(t *testing.T) {
 		t.Fatalf("New() error: %v", err)
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	if cc := rec.Header().Get("Cache-Control"); cc != "no-cache" {
 		t.Errorf("expected Cache-Control: no-cache, got %q", cc)
 	}
@@ -54,7 +54,7 @@ func TestHandler_contentType(t *testing.T) {
 		t.Fatalf("New() error: %v", err)
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	ct := rec.Header().Get("Content-Type")
 	if !strings.HasPrefix(ct, "text/html") {
 		t.Errorf("expected text/html Content-Type, got %q", ct)
@@ -220,6 +220,6 @@ func TestWithDeepLinking_false(t *testing.T) {
 func pageBody(t *testing.T, h *swagger.Handler) string {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	return rec.Body.String()
 }
