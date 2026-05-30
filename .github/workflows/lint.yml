@@ -3,12 +3,14 @@ name: ci - lint
 on:
   push:
     branches: [main]
+    paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml", ".yamllint.yml", "**/*.yml", "**/*.yaml"]
   pull_request:
     branches: [main]
     types: [opened, edited, synchronize, reopened]
+    paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml", ".yamllint.yml", "**/*.yml", "**/*.yaml"]
 
 jobs:
   lint:
-    uses: natalie-o-perret/.github/.github/workflows/reusable-lint.yml@main
+    uses: natalie-o-perret/.github/.github/workflows/reusable-lint.yml@d81a558a5be315cf44082bf5aedc19e7244ebd27
     permissions:
       pull-requests: read

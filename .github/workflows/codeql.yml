@@ -10,7 +10,7 @@ on:
 
 jobs:
   codeql:
-    uses: natalie-o-perret/.github/.github/workflows/reusable-codeql.yml@main
+    uses: natalie-o-perret/.github/.github/workflows/reusable-codeql.yml@d81a558a5be315cf44082bf5aedc19e7244ebd27
     with:
       language: go
     permissions:
