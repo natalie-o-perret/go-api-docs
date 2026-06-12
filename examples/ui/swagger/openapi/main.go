@@ -23,11 +23,11 @@ import (
 
 // Task is a to-do item.
 type Task struct {
+	CreatedAt time.Time `json:"createdAt,omitempty"`
 	ID        string    `json:"id"                  example:"task_1"     readOnly:"true"`
 	Title     string    `json:"title"               example:"Design flow"`
 	Status    string    `json:"status"              example:"open"        enum:"open,in_progress,done"`
 	Priority  string    `json:"priority,omitempty"  example:"medium"      enum:"low,medium,high"`
-	CreatedAt time.Time `json:"createdAt,omitempty"`
 }
 
 // TaskInput is the request body for creating or updating a task.
@@ -57,11 +57,10 @@ type ListTasksInput struct {
 
 // PatchTaskInput combines the path param with a partial body.
 type PatchTaskInput struct {
-	ID    string  `path:"id"              doc:"Task ID"`
-	Title *string `json:"title,omitempty"`
-	// Embedding TaskPatch fields directly — path param + body in one struct.
+	Title    *string `json:"title,omitempty"`
 	Status   *string `json:"status,omitempty"   enum:"open,in_progress,done"`
 	Priority *string `json:"priority,omitempty" enum:"low,medium,high"`
+	ID       string  `path:"id"              doc:"Task ID"`
 }
 
 // ── seed data ─────────────────────────────────────────────────────────────────

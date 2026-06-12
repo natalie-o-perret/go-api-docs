@@ -13,9 +13,9 @@ import (
 // from the routes registered through it.
 type Router struct {
 	mux        *http.ServeMux
-	doc        Document
 	components map[string]Schema
-	pathValue  PathValueFn // how to extract path params (defaults to r.PathValue)
+	pathValue  PathValueFn
+	doc        Document
 }
 
 // PathValueFn extracts a named URL path parameter from a request.
@@ -264,7 +264,7 @@ func Handle[In, Out any](r *Router, method, path string, fn func(*http.Request, 
 		}
 
 		status := http.StatusOK
-		if strings.ToUpper(method) == http.MethodPost {
+		if strings.EqualFold(method, http.MethodPost) {
 			status = http.StatusCreated
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -366,12 +366,12 @@ func buildOperation[In, Out any](method string, components map[string]Schema, op
 
 	// ── success response ──────────────────────────────────────────────────────
 	statusCode := "200"
-	if strings.ToUpper(method) == http.MethodPost {
+	if strings.EqualFold(method, http.MethodPost) {
 		statusCode = "201"
 	}
-	if isEmptyStruct(outType) || strings.ToUpper(method) == http.MethodDelete {
+	if isEmptyStruct(outType) || strings.EqualFold(method, http.MethodDelete) {
 		op.Responses["204"] = Response{Description: "No content"}
-		if strings.ToUpper(method) == http.MethodDelete {
+		if strings.EqualFold(method, http.MethodDelete) {
 			return op
 		}
 	} else {
@@ -616,9 +616,9 @@ type ErrorBody struct {
 
 // HTTPError is a sentinel error carrying an HTTP status.
 type HTTPError struct {
-	Status  int
 	Code    string
 	Message string
+	Status  int
 }
 
 func (e *HTTPError) Error() string { return e.Message }

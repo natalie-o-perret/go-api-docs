@@ -50,12 +50,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type config struct {
 	scalarConfig map[string]any
-	sources      []Source
+	branding     *Branding
+	tmpl         *template.Template
 	pageTitle    string
 	envBadge     string
-	branding     *Branding
 	jsPath       string
-	tmpl         *template.Template
+	sources      []Source
 }
 
 func defaultConfig() *config {
@@ -72,15 +72,15 @@ func defaultConfig() *config {
 
 // PageData is passed to the HTML template.
 type PageData struct {
+	Branding     *Branding
 	PageTitle    string
 	FaviconURL   string
-	FaviconType  string        // MIME type for the favicon, e.g. "image/svg+xml"
-	FaviconLink  template.HTML // pre-rendered <link> tag; used by the default template
-	DarkMode     bool          // reflects the darkMode scalar config value
-	Branding     *Branding
+	FaviconType  string
+	FaviconLink  template.HTML
 	EnvBadge     string
 	JSPath       string
 	ScalarConfig template.JS
+	DarkMode     bool
 }
 
 func renderPage(cfg *config) ([]byte, error) {
@@ -121,7 +121,7 @@ func renderPage(cfg *config) ([]byte, error) {
 	}
 	if data.FaviconURL != "" {
 		data.FaviconLink = template.HTML(fmt.Sprintf(
-			`<link rel="icon" type="%s" href="%s"/>`,
+			`<link rel="icon" type=%q href=%q/>`,
 			template.HTMLEscapeString(data.FaviconType),
 			template.HTMLEscapeString(data.FaviconURL),
 		))

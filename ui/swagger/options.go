@@ -85,6 +85,7 @@ func WithTemplate(tmpl *template.Template) Option {
 // DocExpansion controls how operations are expanded in the UI.
 type DocExpansion string
 
+// DocExpansion values.
 const (
 	DocExpansionList DocExpansion = "list" // each operation collapsed, but tag groups open
 	DocExpansionFull DocExpansion = "full" // all operations and their details expanded

@@ -34,7 +34,7 @@ func TestNew_pageContainsConfig(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	h.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
@@ -59,7 +59,7 @@ func TestHandler_servesJS(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/scalar.js", nil)
+	req := httptest.NewRequest(http.MethodGet, "/scalar.js", http.NoBody)
 	h.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -88,7 +88,7 @@ func TestHandler_branding(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	h.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
@@ -108,7 +108,7 @@ func TestWithOption_escapeHatch(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
 	h.ServeHTTP(rec, req)
 
 	if !strings.Contains(rec.Body.String(), `"tagsSorter":"alpha"`) {
@@ -122,7 +122,7 @@ func TestWithSpecURL(t *testing.T) {
 		t.Fatalf("New() error: %v", err)
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	if !strings.Contains(rec.Body.String(), `/api/openapi.yaml`) {
 		t.Error("expected spec URL in page")
 	}
@@ -305,7 +305,7 @@ func TestHandler_htmlCacheHeader(t *testing.T) {
 		t.Fatalf("New() error: %v", err)
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	if cc := rec.Header().Get("Cache-Control"); cc != "no-cache" {
 		t.Errorf("expected Cache-Control: no-cache on HTML, got %q", cc)
 	}
@@ -317,7 +317,7 @@ func TestHandler_jsCacheHeader(t *testing.T) {
 		t.Fatalf("New() error: %v", err)
 	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/scalar.js", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/scalar.js", http.NoBody))
 	cc := rec.Header().Get("Cache-Control")
 	if !strings.Contains(cc, "immutable") {
 		t.Errorf("expected immutable cache for JS, got %q", cc)
@@ -422,7 +422,7 @@ func TestCustomTheme_sidebarMethods(t *testing.T) {
 func pageBody(t *testing.T, h *scalar.Handler) string {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", http.NoBody))
 	return rec.Body.String()
 }
 

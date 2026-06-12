@@ -1,4 +1,4 @@
-name: ci
+name: ci - build + tests
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
 
 jobs:
   test:
-    name: test
-    runs-on: ubuntu-latest
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v6
 
@@ -23,6 +27,53 @@ jobs:
 
       - name: vet
         run: go vet $(go list ./... | grep -v '/example')
+        if: runner.os != 'Windows'
+
+      - name: vet (windows)
+        run: |
+          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
+          go vet $packages
+        shell: pwsh
+        if: runner.os == 'Windows'
 
       - name: test
-        run: go test -race -count=1 $(go list ./... | grep -v '/example')
+        run: go test -race -count=1 -coverprofile=coverage.out $(go list ./... | grep -v '/example')
+        if: runner.os != 'Windows'
+
+      - name: test (windows)
+        run: |
+          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
+          go test -race -count=1 $packages
+        shell: pwsh
+        if: runner.os == 'Windows'
+
+      - name: coverage gate (>= 45%)
+        if: runner.os == 'Linux'
+        run: |
+          total=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub(/%/,"",$3); print $3}')
+          echo "Total coverage: ${total}%"
+          awk -v t="$total" 'BEGIN { if (t+0 < 45) { print "Coverage " t "% is below 45% threshold"; exit 1 } }'
+
+      - name: upload coverage
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.out
+
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: run govulncheck
+        run: govulncheck $(go list ./... | grep -v '/example')

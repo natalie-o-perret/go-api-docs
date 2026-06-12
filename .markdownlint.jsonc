@@ -16,8 +16,12 @@
   // Allow multiple top-level headings
   "MD025": false,
 
-  // Don't require blank lines around fenced code blocks inside list items
-  "MD031": false,
+  // Don't require a top-level heading as the first line —
+  // issue/PR templates use front matter and bold section headers
+  "MD041": false,
+
+  // Allow emphasis used as heading (issue templates use **bold** section headers)
+  "MD036": false,
 
   // Fenced code blocks: don't require a language tag
   "MD040": false,
@@ -25,4 +29,3 @@
   // Table column alignment — unenforceable when cells contain long prose/URLs
   "MD060": false
 }
-

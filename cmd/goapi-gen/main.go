@@ -251,13 +251,13 @@ func (g *generator) handleNew(pkg *packages.Package, call *ast.CallExpr) {
 // ── Route-option extraction ────────────────────────────────────────────────────
 
 type routeOpts struct {
+	extraResps map[string]openapi.Response
 	summary    string
 	desc       string
-	tags       []string
 	opID       string
-	deprecated bool
+	tags       []string
 	security   []string
-	extraResps map[string]openapi.Response
+	deprecated bool
 }
 
 func (g *generator) extractRouteOpts(pkg *packages.Package, args []ast.Expr) routeOpts {
@@ -374,10 +374,10 @@ func (g *generator) buildOp(method string, inType, outType types.Type, opts rout
 
 	// Success response.
 	statusCode := "200"
-	if strings.ToUpper(method) == "POST" {
+	if strings.EqualFold(method, "POST") {
 		statusCode = "201"
 	}
-	isDelete := strings.ToUpper(method) == "DELETE"
+	isDelete := strings.EqualFold(method, "DELETE")
 	noOut := outType == nil || isEmptyStructType(outType)
 
 	if noOut || isDelete {

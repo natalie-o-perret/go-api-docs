@@ -33,11 +33,11 @@ import (
 // ── Domain types ──────────────────────────────────────────────────────────────
 
 type Task struct {
+	CreatedAt time.Time `json:"createdAt"           readOnly:"true"`
 	ID        string    `json:"id"                  readOnly:"true"  example:"task_1"`
 	Title     string    `json:"title"               doc:"Task title" example:"Buy milk"  minLength:"1" maxLength:"200"`
 	Status    string    `json:"status"                               example:"open"     enum:"open,in_progress,done"`
 	Priority  string    `json:"priority,omitempty"                  example:"medium"   enum:"low,medium,high"`
-	CreatedAt time.Time `json:"createdAt"           readOnly:"true"`
 }
 
 type CreateTaskInput struct {
@@ -46,10 +46,10 @@ type CreateTaskInput struct {
 }
 
 type UpdateTaskInput struct {
-	ID       string  `path:"id"                   doc:"Task ID"`
 	Title    *string `json:"title,omitempty"      doc:"New title"    maxLength:"200"`
 	Status   *string `json:"status,omitempty"     doc:"New status"   enum:"open,in_progress,done"`
 	Priority *string `json:"priority,omitempty"   doc:"New priority" enum:"low,medium,high"`
+	ID       string  `path:"id"                   doc:"Task ID"`
 }
 
 type TaskIDParam struct {

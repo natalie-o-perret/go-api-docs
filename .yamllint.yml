@@ -1,13 +1,34 @@
+---
+# yamllint configuration
+# https://yamllint.readthedocs.io/en/stable/rules.html
 extends: default
+
 rules:
-  # Long lines are common in GitHub Actions YAML (uses: …@vN, args: …).
-  # Raise the limit and demote to warning so the build is not blocked.
+  # GitHub Actions values like "on:" trigger the truthy rule — allow it
+  truthy:
+    allowed-values: [ "true", "false", "on", "off", "yes", "no" ]
+    check-keys: false
+
+  # Long lines are common in workflow files (run: scripts, URLs)
   line-length:
     max: 150
     level: warning
-  # Not every YAML file in this repo starts with "---".
+
+  # Not every YAML file in this repo starts with "---"
   document-start: disable
-  # Allow bare true/false booleans (used by golangci-lint and GitHub Actions).
-  truthy:
-    allowed-values: ["true", "false"]
-    check-keys: false
+
+  # Allow comments without a preceding blank line
+  comments:
+    min-spaces-from-content: 1
+
+  # GitHub Actions and golangci-lint configs use "[ value ]" flow sequences —
+  # allow up to one space inside brackets
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # 2-space indentation (GitHub Actions standard)
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
