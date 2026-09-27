@@ -29,6 +29,11 @@ jobs:
         run: go vet ./openapi ./ui/... ./cmd/...
 
       - name: test
+        if: runner.os != 'Linux'
+        run: go test -race -count=1 ./openapi ./ui/... ./cmd/...
+
+      - name: test with coverage
+        if: runner.os == 'Linux'
         run: go test -race -count=1 -coverprofile=coverage.out ./openapi ./ui/... ./cmd/...
 
       - name: build root-module examples

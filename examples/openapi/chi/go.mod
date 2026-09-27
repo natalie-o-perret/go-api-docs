@@ -1,6 +1,6 @@
 module example/openapi/chi
 
-go 1.26.4
+go 1.26.6
 
 replace github.com/natalie-o-perret/go-api-docs => ../../..
 
