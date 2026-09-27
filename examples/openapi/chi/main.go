@@ -17,8 +17,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/nopereta/go-api-docs/openapi"
-	"github.com/nopereta/go-api-docs/ui/scalar"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 type Task struct {

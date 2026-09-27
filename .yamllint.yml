@@ -4,9 +4,9 @@
 extends: default
 
 rules:
-  # GitHub Actions values like "on:" trigger the truthy rule — allow it
+  # GitHub Actions values like "on:" trigger the truthy rule, so allow it
   truthy:
-    allowed-values: [ "true", "false", "on", "off", "yes", "no" ]
+    allowed-values: ["true", "false", "on", "off", "yes", "no"]
     check-keys: false
 
   # Long lines are common in workflow files (run: scripts, URLs)
@@ -21,7 +21,7 @@ rules:
   comments:
     min-spaces-from-content: 1
 
-  # GitHub Actions and golangci-lint configs use "[ value ]" flow sequences —
+  # GitHub Actions and golangci-lint configs use flow sequences.
   # allow up to one space inside brackets
   brackets:
     min-spaces-inside: 0

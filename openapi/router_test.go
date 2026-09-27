@@ -3,13 +3,15 @@ package openapi_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/nopereta/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
 )
 
 // ── domain types used across tests ───────────────────────────────────────────
@@ -497,4 +499,143 @@ func TestSchemaProvider_bypassesReflection(t *testing.T) {
 	if _, ok := schemas["schemaProviderTask"]; ok {
 		t.Error("SchemaProvider types must be inlined, not registered as $ref in components/schemas")
 	}
+}
+
+type defaultJSONInput struct {
+	Name string
+}
+
+func TestPOST_usesEncodingJSONFieldNames(t *testing.T) {
+	r := newRouter()
+	openapi.POST[defaultJSONInput, defaultJSONInput](r, "/names", func(_ *http.Request, in *defaultJSONInput) (*defaultJSONInput, error) {
+		return in, nil
+	})
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/names", strings.NewReader(`{"Name":"Ada"}`))
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var got defaultJSONInput
+	if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "Ada" {
+		t.Fatalf("expected Ada, got %q", got.Name)
+	}
+}
+
+type strictParams struct {
+	Active bool   `query:"active" required:"true"`
+	Token  string `header:"X-Token" required:"true"`
+}
+
+func TestGETWithInput_rejectsMissingAndInvalidParams(t *testing.T) {
+	r := newRouter()
+	called := false
+	openapi.GETWithInput[strictParams, Task](r, "/strict", func(_ *http.Request, _ *strictParams) (*Task, error) {
+		called = true
+		return &Task{}, nil
+	})
+
+	for _, target := range []string{"/strict", "/strict?active=not-a-bool"} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, target, http.NoBody)
+		if strings.Contains(target, "active=") {
+			req.Header.Set("X-Token", "token")
+		}
+		r.ServeHTTP(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s: expected 400, got %d", target, rec.Code)
+		}
+	}
+	if called {
+		t.Fatal("handler was called for invalid input")
+	}
+}
+
+func TestPOST_requiresOneJSONBody(t *testing.T) {
+	r := newRouter()
+	openapi.POST[TaskInput, Task](r, "/tasks", func(_ *http.Request, _ *TaskInput) (*Task, error) {
+		return &Task{}, nil
+	})
+
+	for _, body := range []string{"", `{"title":"one"} {"title":"two"}`} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(body))
+		r.ServeHTTP(rec, req)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("body %q: expected 400, got %d", body, rec.Code)
+		}
+	}
+}
+
+func TestHandle_hidesInternalErrorsAndRejectsNilOutput(t *testing.T) {
+	r := newRouter()
+	openapi.GET[Task](r, "/error", func(_ *http.Request) (*Task, error) {
+		return nil, errors.New("database password leaked")
+	})
+	openapi.GET[Task](r, "/nil", func(_ *http.Request) (*Task, error) {
+		return nil, nil
+	})
+
+	for _, path := range []string{"/error", "/nil"} {
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, http.NoBody))
+		if rec.Code != http.StatusInternalServerError {
+			t.Errorf("%s: expected 500, got %d", path, rec.Code)
+		}
+		if strings.Contains(rec.Body.String(), "password") {
+			t.Errorf("%s: internal error leaked: %s", path, rec.Body.String())
+		}
+	}
+}
+
+type nestedSchema struct {
+	Value string `json:"value"`
+}
+
+type parentSchema struct {
+	Nested nestedSchema `json:"nested"`
+	Maybe  *string      `json:"maybe"`
+}
+
+func TestSchema_isCompleteAcrossRoutersAndUsesOpenAPI31Nulls(t *testing.T) {
+	for i := 0; i < 2; i++ {
+		r := newRouter()
+		openapi.GET[parentSchema](r, "/schema", func(_ *http.Request) (*parentSchema, error) {
+			return &parentSchema{}, nil
+		})
+		raw := string(r.OpenAPI())
+		if !strings.Contains(raw, `"nestedSchema"`) {
+			t.Fatal("nested component is missing")
+		}
+		if strings.Contains(raw, `"nullable"`) {
+			t.Fatal("OpenAPI 3.1 schema contains the OpenAPI 3.0 nullable keyword")
+		}
+		if !strings.Contains(raw, `"type": [`) || !strings.Contains(raw, `"null"`) {
+			t.Fatal("pointer schema does not include null in its type")
+		}
+	}
+}
+
+func TestRouter_OpenAPIIsConcurrentSafe(_ *testing.T) {
+	r := newRouter()
+	openapi.GET[parentSchema](r, "/schema", func(_ *http.Request) (*parentSchema, error) {
+		return &parentSchema{}, nil
+	})
+
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range 20 {
+				_ = r.OpenAPI()
+			}
+		}()
+	}
+	wg.Wait()
 }

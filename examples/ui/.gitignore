@@ -1,0 +1,10 @@
+# Compiled example binaries
+scalar/basic/basic
+scalar/cdn/cdn
+scalar/full/full
+scalar/multi-spec/multi-spec
+scalar/openpotato/openpotato
+scalar/swagger2/swagger2
+swagger/basic/basic
+swagger/full/full
+swagger/openapi/openapi

@@ -1,7 +1,7 @@
 // Example: swagger/openapi — spec generated automatically from Go types and
 // handler signatures, zero manual JSON required.
 //
-// Uses github.com/nopereta/go-api-docs/openapi for typed route registration
+// Uses github.com/natalie-o-perret/go-api-docs/openapi for typed route registration
 // and spec generation, then serves the result via the swagger package.
 //
 // Run from this directory:
@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nopereta/go-api-docs/openapi"
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger"
 )
 
 // ── domain types ─────────────────────────────────────────────────────────────

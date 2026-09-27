@@ -18,7 +18,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger"
 )
 
 const (

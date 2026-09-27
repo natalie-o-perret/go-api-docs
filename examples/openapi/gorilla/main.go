@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/nopereta/go-api-docs/openapi"
-	"github.com/nopereta/go-api-docs/ui/scalar"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 type Task struct {

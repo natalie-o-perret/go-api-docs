@@ -1,13 +1,12 @@
 module example/openapi/fiber
 
-go 1.26.2
+go 1.26.6
 
-replace github.com/nopereta/go-api-docs => ../../..
+replace github.com/natalie-o-perret/go-api-docs => ../../..
 
 require (
-	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.52.13
-	github.com/nopereta/go-api-docs v0.0.0-00010101000000-000000000000
+	github.com/natalie-o-perret/go-api-docs v0.0.0-00010101000000-000000000000
 )
 
 require (

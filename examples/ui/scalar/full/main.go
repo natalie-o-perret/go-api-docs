@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	scalar "github.com/nopereta/go-api-docs/ui/scalar"
+	scalar "github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 // ── domain enums — shared between spec builder and handlers ──────────────────
@@ -192,7 +192,7 @@ func buildSpec() []byte {
 						"status":      prop("string", enum(taskStatuses)),
 						"priority":    prop("string", enum(priorities), map[string]any{"default": "medium"}),
 						"assignee":    ref("UserRef"),
-						"dueAt":       prop("string", map[string]any{"format": "date-time", "nullable": true}),
+						"dueAt":       prop("string", map[string]any{"type": []string{"string", "null"}, "format": "date-time"}),
 						"createdAt":   prop("string", map[string]any{"format": "date-time", "readOnly": true}),
 						"updatedAt":   prop("string", map[string]any{"format": "date-time", "readOnly": true}),
 					},
@@ -204,7 +204,7 @@ func buildSpec() []byte {
 						"description": prop("string"),
 						"priority":    prop("string", enum(priorities), map[string]any{"default": "medium"}),
 						"assigneeId":  prop("string", map[string]any{"format": "uuid"}),
-						"dueAt":       prop("string", map[string]any{"format": "date-time", "nullable": true}),
+						"dueAt":       prop("string", map[string]any{"type": []string{"string", "null"}, "format": "date-time"}),
 					},
 				},
 				"TaskPatch": map[string]any{
@@ -214,15 +214,15 @@ func buildSpec() []byte {
 						"description": prop("string"),
 						"status":      prop("string", enum(taskStatuses)),
 						"priority":    prop("string", enum(priorities)),
-						"assigneeId":  prop("string", map[string]any{"format": "uuid", "nullable": true}),
-						"dueAt":       prop("string", map[string]any{"format": "date-time", "nullable": true}),
+						"assigneeId":  prop("string", map[string]any{"type": []string{"string", "null"}, "format": "uuid"}),
+						"dueAt":       prop("string", map[string]any{"type": []string{"string", "null"}, "format": "date-time"}),
 					},
 				},
 				"TaskPage": map[string]any{
 					"type": "object", "required": []string{"items"},
 					"properties": map[string]any{
 						"items":      map[string]any{"type": "array", "items": ref("Task")},
-						"nextCursor": prop("string", map[string]any{"nullable": true}),
+						"nextCursor": prop("string", map[string]any{"type": []string{"string", "null"}}),
 					},
 				},
 				"Comment": map[string]any{
@@ -246,7 +246,7 @@ func buildSpec() []byte {
 						"id":        prop("string", map[string]any{"format": "uuid", "readOnly": true}),
 						"name":      prop("string"),
 						"email":     prop("string", map[string]any{"format": "email"}),
-						"avatarURL": prop("string", map[string]any{"format": "uri", "nullable": true}),
+						"avatarURL": prop("string", map[string]any{"type": []string{"string", "null"}, "format": "uri"}),
 						"createdAt": prop("string", map[string]any{"format": "date-time", "readOnly": true}),
 					},
 				},

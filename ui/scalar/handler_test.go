@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nopereta/go-api-docs/ui/scalar"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 func TestNew_defaults(t *testing.T) {

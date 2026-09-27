@@ -26,26 +26,18 @@ jobs:
         run: go mod download
 
       - name: vet
-        run: go vet $(go list ./... | grep -v '/example')
-        if: runner.os != 'Windows'
-
-      - name: vet (windows)
-        run: |
-          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
-          go vet $packages
-        shell: pwsh
-        if: runner.os == 'Windows'
+        run: go vet ./openapi ./ui/... ./cmd/...
 
       - name: test
-        run: go test -race -count=1 -coverprofile=coverage.out $(go list ./... | grep -v '/example')
-        if: runner.os != 'Windows'
+        if: runner.os != 'Linux'
+        run: go test -race -count=1 ./openapi ./ui/... ./cmd/...
 
-      - name: test (windows)
-        run: |
-          $packages = go list ./... | Where-Object { $_ -notlike '*/example*' }
-          go test -race -count=1 $packages
-        shell: pwsh
-        if: runner.os == 'Windows'
+      - name: test with coverage
+        if: runner.os == 'Linux'
+        run: go test -race -count=1 -coverprofile=coverage.out ./openapi ./ui/... ./cmd/...
+
+      - name: build root-module examples
+        run: go test ./examples/ui/... ./examples/openapi/goapi-gen
 
       - name: coverage gate (>= 45%)
         if: runner.os == 'Linux'
@@ -76,4 +68,38 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
       - name: run govulncheck
-        run: govulncheck $(go list ./... | grep -v '/example')
+        run: govulncheck ./openapi ./ui/... ./cmd/...
+
+  examples:
+    name: example (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: chi
+            directory: examples/openapi/chi
+          - name: echo
+            directory: examples/openapi/echo
+          - name: fiber
+            directory: examples/openapi/fiber
+          - name: gin
+            directory: examples/openapi/gin
+          - name: gorilla
+            directory: examples/openapi/gorilla
+          - name: httprouter
+            directory: examples/openapi/httprouter
+          - name: stdhttp
+            directory: examples/openapi/stdhttp
+    defaults:
+      run:
+        working-directory: ${{ matrix.directory }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ matrix.directory }}/go.mod
+          cache: false
+
+      - run: go test ./...

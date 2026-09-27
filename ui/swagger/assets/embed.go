@@ -1,5 +1,5 @@
 // Package assets holds the vendored Swagger UI distribution files.
-// Update them with: make vendor-swagger-ui VERSION=5.x.y
+// Update them with: make vendor-swagger-ui SWAGGER_VERSION=5.x.y
 package assets
 
 import _ "embed"

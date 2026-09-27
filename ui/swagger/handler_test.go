@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger"
 )
 
 func TestNew_defaults(t *testing.T) {
