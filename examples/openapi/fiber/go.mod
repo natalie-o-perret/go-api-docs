@@ -5,7 +5,7 @@ go 1.26.6
 replace github.com/natalie-o-perret/go-api-docs => ../../..
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/natalie-o-perret/go-api-docs v0.0.0-00010101000000-000000000000
 )
 
