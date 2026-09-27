@@ -3,11 +3,9 @@ name: ci - lint
 on:
   push:
     branches: [main]
-    paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml", ".yamllint.yml", "**/*.yml", "**/*.yaml"]
   pull_request:
     branches: [main]
     types: [opened, edited, synchronize, reopened]
-    paths: ["**/*.go", "go.mod", "go.sum", ".golangci.yml", ".yamllint.yml", "**/*.yml", "**/*.yaml"]
 
 jobs:
   lint:

@@ -9,7 +9,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/nopereta/go-api-docs/ui/scalar/assets"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar/assets"
 )
 
 // Handler serves the Scalar UI and its JS asset.

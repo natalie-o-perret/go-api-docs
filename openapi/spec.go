@@ -97,6 +97,8 @@ type MediaType struct {
 // Schema is a JSON Schema / OpenAPI schema object.
 type Schema struct {
 	Example     any               `json:"example,omitempty"`
+	Type        any               `json:"type,omitempty"`
+	AnyOf       []Schema          `json:"anyOf,omitempty"`
 	MinLength   *int              `json:"minLength,omitempty"`
 	MaxLength   *int              `json:"maxLength,omitempty"`
 	MaxItems    *int              `json:"maxItems,omitempty"`
@@ -108,11 +110,9 @@ type Schema struct {
 	Pattern     string            `json:"pattern,omitempty"`
 	Ref         string            `json:"$ref,omitempty"`
 	Format      string            `json:"format,omitempty"`
-	Type        string            `json:"type,omitempty"`
 	Description string            `json:"description,omitempty"`
 	Required    []string          `json:"required,omitempty"`
 	Enum        []any             `json:"enum,omitempty"`
 	WriteOnly   bool              `json:"writeOnly,omitempty"`
 	ReadOnly    bool              `json:"readOnly,omitempty"`
-	Nullable    bool              `json:"nullable,omitempty"`
 }

@@ -1,12 +1,12 @@
 module example/openapi/echo
 
-go 1.26.2
+go 1.26.4
 
-replace github.com/nopereta/go-api-docs => ../../..
+replace github.com/natalie-o-perret/go-api-docs => ../../..
 
 require (
 	github.com/labstack/echo/v4 v4.15.1
-	github.com/nopereta/go-api-docs v0.0.0-00010101000000-000000000000
+	github.com/natalie-o-perret/go-api-docs v0.0.0-00010101000000-000000000000
 )
 
 require (

@@ -1,4 +1,4 @@
-module github.com/nopereta/go-api-docs
+module github.com/natalie-o-perret/go-api-docs
 
 go 1.26.4
 

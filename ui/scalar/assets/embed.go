@@ -1,5 +1,5 @@
 // Package assets holds the vendored Scalar JS bundle.
-// Update it with: make vendor-js VERSION=1.x.y
+// Update it with: make vendor-js SCALAR_VERSION=1.x.y
 package assets
 
 import _ "embed"

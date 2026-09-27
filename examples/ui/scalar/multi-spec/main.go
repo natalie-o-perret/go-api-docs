@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 
-	scalar "github.com/nopereta/go-api-docs/ui/scalar"
+	scalar "github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 // ── spec (inlined) ──────────────────────────────────────────────────────────
@@ -454,9 +454,11 @@ const openAPISpec = `
             "$ref": "#/components/schemas/UserRef"
           },
           "dueAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
           "createdAt": {
             "type": "string",
@@ -498,9 +500,11 @@ const openAPISpec = `
             "format": "uuid"
           },
           "dueAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -532,14 +536,18 @@ const openAPISpec = `
             ]
           },
           "assigneeId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "dueAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -556,8 +564,10 @@ const openAPISpec = `
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -622,9 +632,11 @@ const openAPISpec = `
             "format": "email"
           },
           "avatarURL": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
           },
           "createdAt": {
             "type": "string",

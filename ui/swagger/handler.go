@@ -8,7 +8,7 @@
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
-//	http.Handle("/docs/", h)
+//	http.Handle("/", h)
 package swagger
 
 import (
@@ -18,7 +18,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/nopereta/go-api-docs/ui/swagger/assets"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger/assets"
 )
 
 // Handler serves the Swagger UI page.

@@ -1,4 +1,4 @@
-# compiled example binaries — never commit these
+# Compiled example binaries
 chi/chi
 echo/echo
 fiber/fiber

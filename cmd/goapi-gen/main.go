@@ -2,7 +2,7 @@
 // spec without running any code at all.
 //
 // It recognises every route-registration call from
-// github.com/nopereta/go-api-docs/openapi (GET, GETWithInput, POST, PUT,
+// github.com/natalie-o-perret/go-api-docs/openapi (GET, GETWithInput, POST, PUT,
 // PATCH, DELETE, Handle) and the router constructor (New) and extracts:
 //   - the HTTP method and path
 //   - In / Out type parameters → full JSON Schema (struct tags included)
@@ -27,6 +27,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -38,11 +39,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nopereta/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
 	"golang.org/x/tools/go/packages"
 )
 
-const openapiPkgPath = "github.com/nopereta/go-api-docs/openapi"
+const openapiPkgPath = "github.com/natalie-o-perret/go-api-docs/openapi"
 
 func main() {
 	out := flag.String("out", "openapi.json", `output file path; use "-" for stdout`)
@@ -67,10 +68,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("load packages: %v", err)
 	}
+	var loadErrs []error
 	for _, p := range pkgs {
 		for _, e := range p.Errors {
-			log.Printf("warning: %v", e)
+			loadErrs = append(loadErrs, errors.New(e.Error()))
 		}
+	}
+	if err := errors.Join(loadErrs...); err != nil {
+		log.Fatalf("load packages: %v", err)
 	}
 
 	g := &generator{
@@ -81,7 +86,9 @@ func main() {
 			Info:    openapi.Info{Title: "API", Version: "0.0.0"},
 		},
 	}
-	g.run(pkgs)
+	if err := g.run(pkgs); err != nil {
+		log.Fatal(err)
+	}
 
 	b, err := json.MarshalIndent(g.doc, "", "  ")
 	if err != nil {
@@ -105,9 +112,11 @@ type generator struct {
 	components map[string]openapi.Schema
 	paths      map[string]*openapi.PathItem
 	doc        openapi.Document
+	errs       []error
+	newCalls   int
 }
 
-func (g *generator) run(pkgs []*packages.Package) {
+func (g *generator) run(pkgs []*packages.Package) error {
 	for _, pkg := range pkgs {
 		for _, file := range pkg.Syntax {
 			ast.Inspect(file, func(n ast.Node) bool {
@@ -125,6 +134,7 @@ func (g *generator) run(pkgs []*packages.Package) {
 		Schemas:         g.components,
 		SecuritySchemes: g.doc.Components.SecuritySchemes,
 	}
+	return errors.Join(g.errs...)
 }
 
 func (g *generator) handleCall(pkg *packages.Package, call *ast.CallExpr) {
@@ -192,6 +202,11 @@ func (g *generator) handleCall(pkg *packages.Package, call *ast.CallExpr) {
 
 // handleNew parses openapi.New(Info{…}, opts…) and populates doc metadata.
 func (g *generator) handleNew(pkg *packages.Package, call *ast.CallExpr) {
+	g.newCalls++
+	if g.newCalls > 1 {
+		g.errs = append(g.errs, errors.New("multiple openapi.New calls are not supported; generate each API separately"))
+		return
+	}
 	if len(call.Args) == 0 {
 		return
 	}
@@ -382,12 +397,6 @@ func (g *generator) buildOp(method string, inType, outType types.Type, opts rout
 
 	if noOut || isDelete {
 		op.Responses["204"] = openapi.Response{Description: "No content"}
-		if isDelete {
-			for k, v := range opts.extraResps {
-				op.Responses[k] = v
-			}
-			return op
-		}
 	} else {
 		op.Responses[statusCode] = openapi.Response{
 			Description: "Success",
@@ -425,6 +434,7 @@ func (g *generator) ensureErrorBody() {
 // ── Schema from go/types ──────────────────────────────────────────────────────
 
 func (g *generator) schemaFor(t types.Type) openapi.Schema {
+	original := t
 	nullable := false
 	for {
 		p, ok := t.(*types.Pointer)
@@ -434,26 +444,33 @@ func (g *generator) schemaFor(t types.Type) openapi.Schema {
 		nullable = true
 		t = p.Elem()
 	}
+	if implementsSchemaProvider(t) {
+		g.errs = append(g.errs, fmt.Errorf("%s implements openapi.SchemaProvider, which goapi-gen cannot evaluate without running code", types.TypeString(original, nil)))
+		return openapi.Schema{}
+	}
 	s := g.derive(t)
 	if nullable {
-		s.Nullable = true
+		s = nullableSchema(s)
 	}
 	return s
 }
 
 func (g *generator) derive(t types.Type) openapi.Schema {
-	// Named type: time.Time or a named struct ($ref).
+	// Named structs become components. Named scalar types retain their
+	// underlying JSON Schema type, matching the runtime generator.
 	if named, ok := t.(*types.Named); ok {
 		obj := named.Obj()
 		if obj.Pkg() != nil && obj.Pkg().Path() == "time" && obj.Name() == "Time" {
 			return openapi.Schema{Type: "string", Format: "date-time"}
 		}
+		st, isStruct := named.Underlying().(*types.Struct)
+		if !isStruct {
+			return g.derive(named.Underlying())
+		}
 		n := obj.Name()
 		if _, exists := g.components[n]; !exists {
 			g.components[n] = openapi.Schema{} // placeholder against cycles
-			if st, ok := named.Underlying().(*types.Struct); ok {
-				g.components[n] = g.objectSchema(st)
-			}
+			g.components[n] = g.objectSchema(st)
 		}
 		return openapi.Schema{Ref: "#/components/schemas/" + n}
 	}
@@ -476,6 +493,36 @@ func (g *generator) derive(t types.Type) openapi.Schema {
 	default:
 		return openapi.Schema{Type: "string"}
 	}
+}
+
+func nullableSchema(s openapi.Schema) openapi.Schema {
+	if typ, ok := s.Type.(string); ok && typ != "" {
+		s.Type = []string{typ, "null"}
+		return s
+	}
+	return openapi.Schema{AnyOf: []openapi.Schema{s, {Type: "null"}}}
+}
+
+func implementsSchemaProvider(t types.Type) bool {
+	candidates := []types.Type{t}
+	if _, ok := t.(*types.Pointer); !ok {
+		candidates = append(candidates, types.NewPointer(t))
+	}
+	for _, candidate := range candidates {
+		method := types.NewMethodSet(candidate).Lookup(nil, "OpenAPISchema")
+		if method == nil {
+			continue
+		}
+		sig, ok := method.Obj().Type().(*types.Signature)
+		if !ok || sig.Params().Len() != 0 || sig.Results().Len() != 1 {
+			continue
+		}
+		result, ok := sig.Results().At(0).Type().(*types.Named)
+		if ok && result.Obj().Pkg() != nil && result.Obj().Pkg().Path() == openapiPkgPath && result.Obj().Name() == "Schema" {
+			return true
+		}
+	}
+	return false
 }
 
 // objectSchema builds a full object schema from a *types.Struct (all fields).
@@ -762,11 +809,12 @@ func basicSchema(t *types.Basic) openapi.Schema {
 		return openapi.Schema{Type: "boolean"}
 	case types.String:
 		return openapi.Schema{Type: "string"}
-	case types.Int, types.Int8, types.Int16, types.Int32,
-		types.Uint, types.Uint8, types.Uint16, types.Uint32:
+	case types.Int, types.Int8, types.Int16, types.Int32:
 		return openapi.Schema{Type: "integer", Format: "int32"}
-	case types.Int64, types.Uint64:
+	case types.Int64:
 		return openapi.Schema{Type: "integer", Format: "int64"}
+	case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64:
+		return openapi.Schema{Type: "integer"}
 	case types.Float32:
 		return openapi.Schema{Type: "number", Format: "float"}
 	case types.Float64:
@@ -779,20 +827,13 @@ func basicSchema(t *types.Basic) openapi.Schema {
 func jsonFieldName(fieldName string, tag reflect.StructTag) string {
 	t := tag.Get("json")
 	if t == "" {
-		return lcFirst(fieldName)
+		return fieldName
 	}
 	parts := strings.SplitN(t, ",", 2)
 	if parts[0] == "" {
-		return lcFirst(fieldName)
+		return fieldName
 	}
 	return parts[0]
-}
-
-func lcFirst(s string) string {
-	if s == "" {
-		return s
-	}
-	return strings.ToLower(s[:1]) + s[1:]
 }
 
 func paramLocFromTag(tag reflect.StructTag) (in, name string) {
@@ -871,4 +912,4 @@ func applyTagConstraints(s *openapi.Schema, tag reflect.StructTag) {
 	}
 }
 
-// (spec types are imported from github.com/nopereta/go-api-docs/openapi)
+// (spec types are imported from github.com/natalie-o-perret/go-api-docs/openapi)

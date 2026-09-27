@@ -28,8 +28,8 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/nopereta/go-api-docs/openapi"
-	"github.com/nopereta/go-api-docs/ui/scalar"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 // contextKey is a private type for storing httprouter.Params in context.

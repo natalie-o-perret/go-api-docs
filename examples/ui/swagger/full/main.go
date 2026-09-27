@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger"
 )
 
 // ── spec (generated) ─────────────────────────────────────────────────────────

@@ -18,7 +18,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	scalar "github.com/nopereta/go-api-docs/ui/scalar"
+	scalar "github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 const (

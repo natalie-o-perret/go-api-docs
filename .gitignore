@@ -7,7 +7,8 @@
 *.dll
 *.so
 *.dylib
-goapi-gen
+/goapi-gen
 
 # Go workspace
-
+go.work
+go.work.sum

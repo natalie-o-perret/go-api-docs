@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	scalar "github.com/nopereta/go-api-docs/ui/scalar"
+	scalar "github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 // ── spec (embedded from swagger.json, host rewritten for local mock) ─────────

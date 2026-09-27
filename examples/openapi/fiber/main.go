@@ -15,10 +15,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/nopereta/go-api-docs/openapi"
-	"github.com/nopereta/go-api-docs/ui/scalar"
+	"github.com/natalie-o-perret/go-api-docs/openapi"
+	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
 
 type Task struct {

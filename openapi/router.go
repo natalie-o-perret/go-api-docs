@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+	"sync"
 )
 
 // Router is an http.ServeMux wrapper that also builds an OpenAPI 3.1 spec
@@ -16,6 +19,7 @@ type Router struct {
 	components map[string]Schema
 	pathValue  PathValueFn
 	doc        Document
+	mu         sync.RWMutex
 }
 
 // PathValueFn extracts a named URL path parameter from a request.
@@ -61,12 +65,15 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // OpenAPI returns the generated spec as JSON bytes.
 func (r *Router) OpenAPI() []byte {
-	// Preserve SecuritySchemes set via WithSecurityScheme — read before overwrite.
-	r.doc.Components = Components{
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	doc := r.doc
+	doc.Components = Components{
 		Schemas:         r.components,
 		SecuritySchemes: r.doc.Components.SecuritySchemes,
 	}
-	b, _ := json.MarshalIndent(r.doc, "", "  ")
+	b, _ := json.MarshalIndent(doc, "", "  ")
 	return b
 }
 
@@ -236,8 +243,12 @@ func APIKeyQuery(name string) SecurityScheme {
 // Use struct{} for In when there is no input, and struct{} for Out when the
 // handler returns no body (204).
 func Handle[In, Out any](r *Router, method, path string, fn func(*http.Request, *In) (*Out, error), opts ...RouteOption) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	op := buildOperation[In, Out](method, r.components, opts...)
 	setOperation(r.pathItem(path), method, op)
+	outType := reflect.TypeOf((*Out)(nil)).Elem()
 
 	r.mux.HandleFunc(method+" "+path, func(w http.ResponseWriter, req *http.Request) {
 		var in In
@@ -253,13 +264,16 @@ func Handle[In, Out any](r *Router, method, path string, fn func(*http.Request, 
 				writeErr(w, he.Status, he.Code, he.Message)
 				return
 			}
-			writeErr(w, http.StatusInternalServerError, "internal_error", err.Error())
+			writeErr(w, http.StatusInternalServerError, "internal_error", "internal server error")
 			return
 		}
 
-		// 204 when Out is struct{} or out is nil.
-		if out == nil || isEmptyStruct(reflect.TypeOf(out).Elem()) {
+		if isEmptyStruct(outType) {
 			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		if out == nil {
+			writeErr(w, http.StatusInternalServerError, "internal_error", "handler returned no response")
 			return
 		}
 
@@ -316,9 +330,6 @@ func buildOperation[In, Out any](method string, components map[string]Schema, op
 	op := &Operation{
 		Responses: map[string]Response{},
 	}
-	for _, o := range opts {
-		o(op)
-	}
 
 	inType := reflect.TypeOf((*In)(nil)).Elem()
 	outType := reflect.TypeOf((*Out)(nil)).Elem()
@@ -371,9 +382,6 @@ func buildOperation[In, Out any](method string, components map[string]Schema, op
 	}
 	if isEmptyStruct(outType) || strings.EqualFold(method, http.MethodDelete) {
 		op.Responses["204"] = Response{Description: "No content"}
-		if strings.EqualFold(method, http.MethodDelete) {
-			return op
-		}
 	} else {
 		outSchema := schemaForType(outType, components)
 		op.Responses[statusCode] = Response{
@@ -391,6 +399,9 @@ func buildOperation[In, Out any](method string, components map[string]Schema, op
 			"application/json": {Schema: schemaForType(reflect.TypeOf(ErrorBody{}), components)},
 		},
 	}
+	for _, o := range opts {
+		o(op)
+	}
 
 	return op
 }
@@ -404,7 +415,33 @@ func decodeInput(r *http.Request, dst any, pathValue PathValueFn) error {
 		return nil
 	}
 
-	hasBody := false
+	if hasBodyFields(t) && isBodyMethod(r.Method) {
+		if r.Body == nil || r.Body == http.NoBody || r.ContentLength == 0 {
+			return errors.New("request body is required")
+		}
+
+		body := reflect.New(t)
+		dec := json.NewDecoder(r.Body)
+		if err := dec.Decode(body.Interface()); err != nil {
+			return fmt.Errorf("decode body: %w", err)
+		}
+		if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+			if err == nil {
+				return errors.New("decode body: multiple JSON values")
+			}
+			return fmt.Errorf("decode body: %w", err)
+		}
+
+		bodyValue := body.Elem()
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			paramIn, _ := paramLocation(f)
+			if f.IsExported() && paramIn == "" && jsonFieldName(f) != "-" {
+				v.Field(i).Set(bodyValue.Field(i))
+			}
+		}
+	}
+
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if !f.IsExported() {
@@ -414,54 +451,38 @@ func decodeInput(r *http.Request, dst any, pathValue PathValueFn) error {
 		switch paramIn {
 		case "path":
 			raw := pathValue(r, paramName)
+			if raw == "" {
+				return fmt.Errorf("path param %q is required", paramName)
+			}
 			if err := setField(v.Field(i), raw); err != nil {
 				return fmt.Errorf("path param %q: %w", paramName, err)
 			}
 		case "query":
-			raw := r.URL.Query().Get(paramName)
-			if raw != "" {
-				if err := setField(v.Field(i), raw); err != nil {
-					return fmt.Errorf("query param %q: %w", paramName, err)
+			values, present := r.URL.Query()[paramName]
+			if !present {
+				if f.Tag.Get("required") == "true" {
+					return fmt.Errorf("query param %q is required", paramName)
 				}
+				continue
+			}
+			raw := ""
+			if len(values) > 0 {
+				raw = values[0]
+			}
+			if err := setField(v.Field(i), raw); err != nil {
+				return fmt.Errorf("query param %q: %w", paramName, err)
 			}
 		case "header":
-			raw := r.Header.Get(paramName)
-			if raw != "" {
-				if err := setField(v.Field(i), raw); err != nil {
-					return fmt.Errorf("header %q: %w", paramName, err)
+			values := r.Header.Values(paramName)
+			if len(values) == 0 {
+				if f.Tag.Get("required") == "true" {
+					return fmt.Errorf("header %q is required", paramName)
 				}
-			}
-		default:
-			hasBody = true
-		}
-	}
-
-	if hasBody && r.Body != nil && r.ContentLength != 0 {
-		// Decode only the body-tagged fields by building a temporary map.
-		var raw map[string]json.RawMessage
-		if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
-			return fmt.Errorf("decode body: %w", err)
-		}
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
-			if !f.IsExported() {
 				continue
 			}
-			paramIn, _ := paramLocation(f)
-			if paramIn != "" {
-				continue // skip params
+			if err := setField(v.Field(i), values[0]); err != nil {
+				return fmt.Errorf("header %q: %w", paramName, err)
 			}
-			key := jsonFieldName(f)
-			data, ok := raw[key]
-			if !ok {
-				continue
-			}
-			fv := v.Field(i)
-			dest := reflect.New(f.Type)
-			if err := json.Unmarshal(data, dest.Interface()); err != nil {
-				return fmt.Errorf("body field %q: %w", key, err)
-			}
-			fv.Set(dest.Elem())
 		}
 	}
 
@@ -476,38 +497,43 @@ func decodeInput(r *http.Request, dst any, pathValue PathValueFn) error {
 
 // setField sets a reflect.Value from a string (for path/query/header params).
 func setField(v reflect.Value, s string) error {
-	t := v.Type()
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-		nv := reflect.New(t)
+	if v.Kind() == reflect.Ptr {
+		nv := reflect.New(v.Type().Elem())
+		if err := setField(nv.Elem(), s); err != nil {
+			return err
+		}
 		v.Set(nv)
-		v = nv.Elem()
+		return nil
 	}
-	switch t.Kind() {
+	switch v.Kind() {
 	case reflect.String:
 		v.SetString(s)
 	case reflect.Bool:
-		v.SetBool(s == "true" || s == "1")
+		b, err := strconv.ParseBool(s)
+		if err != nil {
+			return err
+		}
+		v.SetBool(b)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		var n int64
-		if _, err := fmt.Sscanf(s, "%d", &n); err != nil {
+		n, err := strconv.ParseInt(s, 10, v.Type().Bits())
+		if err != nil {
 			return err
 		}
 		v.SetInt(n)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		var n uint64
-		if _, err := fmt.Sscanf(s, "%d", &n); err != nil {
+		n, err := strconv.ParseUint(s, 10, v.Type().Bits())
+		if err != nil {
 			return err
 		}
 		v.SetUint(n)
 	case reflect.Float32, reflect.Float64:
-		var f float64
-		if _, err := fmt.Sscanf(s, "%f", &f); err != nil {
+		f, err := strconv.ParseFloat(s, v.Type().Bits())
+		if err != nil {
 			return err
 		}
 		v.SetFloat(f)
 	default:
-		return fmt.Errorf("unsupported field type %s", t)
+		return fmt.Errorf("unsupported field type %s", v.Type())
 	}
 	return nil
 }

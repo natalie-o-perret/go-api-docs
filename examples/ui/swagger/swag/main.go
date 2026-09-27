@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nopereta/go-api-docs/ui/swagger"
+	"github.com/natalie-o-perret/go-api-docs/ui/swagger"
 	// Blank import runs the init() in docs/docs.go which registers the
 	// generated spec with swag's global registry.
-	_ "github.com/nopereta/go-api-docs/examples/ui/swagger/swag/docs"
+	_ "github.com/natalie-o-perret/go-api-docs/examples/ui/swagger/swag/docs"
 	swag "github.com/swaggo/swag"
 )
 
