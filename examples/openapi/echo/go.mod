@@ -5,7 +5,7 @@ go 1.26.6
 replace github.com/natalie-o-perret/go-api-docs => ../../..
 
 require (
-	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/echo/v4 v4.16.0
 	github.com/natalie-o-perret/go-api-docs v0.0.0-00010101000000-000000000000
 )
 
