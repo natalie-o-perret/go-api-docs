@@ -4,7 +4,7 @@ go 1.26.6
 
 require (
 	github.com/swaggo/swag v1.16.6
-	golang.org/x/tools v0.50.0
+	golang.org/x/tools v0.51.0
 )
 
 require (
