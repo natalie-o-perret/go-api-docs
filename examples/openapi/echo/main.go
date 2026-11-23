@@ -16,8 +16,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 	"github.com/natalie-o-perret/go-api-docs/openapi"
 	"github.com/natalie-o-perret/go-api-docs/ui/scalar"
 )
@@ -106,8 +106,7 @@ func main() {
 	// echo.WrapHandler converts http.Handler to echo.HandlerFunc.
 	// The openapi.Router internal stdlib mux handles dispatch and path params.
 	e := echo.New()
-	e.HideBanner = true
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 
 	e.GET("/docs", echo.WrapHandler(ui))
@@ -115,5 +114,5 @@ func main() {
 	e.Any("/*", echo.WrapHandler(api))
 
 	log.Println("listening on http://localhost:9094  (docs:/docs  spec:/openapi.json)")
-	log.Fatal(e.Start(":9094"))
+	log.Fatal(http.ListenAndServe(":9094", e))
 }
